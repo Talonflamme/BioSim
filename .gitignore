@@ -1,6 +1,9 @@
 target/
 .idea/
 snapshots/
+rsc/big/
+rsc/small/
+rsc/config.json
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup

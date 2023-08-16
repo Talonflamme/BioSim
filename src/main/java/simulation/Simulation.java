@@ -162,10 +162,9 @@ public class Simulation {
                 System.out.printf("Generation done: %d/%d%n", gen + 1, generations);
             }
 
-            visualizer.addSelection(config, 2);
+            visualizer.addSelection(config, 5);
             killAgents();
-            visualizer.addFrame(agents);
-            visualizer.waitSeconds(2);
+//            visualizer.addFrame(agents);
 
             if (true) break;
             if (gen == generations - 1) continue;

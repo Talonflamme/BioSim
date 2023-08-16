@@ -3,6 +3,7 @@ package simulation.config;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.text.TextStringBuilder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import simulation.Agent;
@@ -114,4 +115,25 @@ public abstract class Selection {
      * Returns whether the agent survives this selection.
      */
     public abstract boolean survives(Agent agent);
+
+    /**
+     * Write to the keyframes.
+     * @param sb The TextBuilder which is used in the animations section.
+     * @param timeStart the percentage at which to start the animation ({@code 62% = 0.68f}).
+     * @param timeEnd the percentage at which to stop the animation ({@code 98% = 0.98}).
+     * @param id the id used for the {@code @keyframes} identifier.
+     */
+    public abstract void writeAnimation(TextStringBuilder sb, float timeStart, float timeEnd, int id);
+
+    /**
+     * The amount of IDs this selection uses for the animation.
+     */
+    public abstract int numAnimationIDs();
+
+    /**
+     * Write to the elements.
+     * @param elements The TextBuilder which is used in the elements section.
+     * @param id the id used for the @keyframes identifier.
+     */
+    public abstract void writeElements(TextStringBuilder elements, int id);
 }

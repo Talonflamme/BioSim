@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 import static utility.Utility.*;
 import static visualization.Board.*;
 
-class BoardAnimation {
+public class BoardAnimation {
     private final SimulationConfig config;
     private final ArrayList<AnimationKeyframe> keyframes;
 
@@ -40,14 +40,14 @@ class BoardAnimation {
     private static final Pattern colorFormatRegex = Pattern.compile("(.)\\1(.)\\2(.)\\3(?:(.)\\4)?$",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
-    static String format(float f, int maxDecimals) {
+    public static String format(float f, int maxDecimals) {
         if (maxDecimals <= 0) return String.valueOf(Math.round(f));
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
         DecimalFormat df = new DecimalFormat("#." + "#".repeat(maxDecimals), symbols);
         return df.format(f);
     }
 
-    static String format(Color c) {
+    public static String format(Color c) {
         String color = "#%08x".formatted(c.getRGB());
         if (c.getAlpha() == 255) {
             color = "#" + color.substring(3);
@@ -60,33 +60,35 @@ class BoardAnimation {
         return matcher.replaceAll("$2$3$4$1");
     }
 
+    private int getUsedIDs() {
+        int id = 0;
+        for (AnimationKeyframe kf : keyframes) {
+            id += kf.numIDs();
+        }
+        return id;
+    }
+
     void addFrame(Agent[] agents) {
         MovementKeyframe mkf;
-        if (keyframes.isEmpty()) {
-            keyframes.add(mkf = new MovementKeyframe());
-        } else if (keyframes.get(keyframes.size() - 1) instanceof MovementKeyframe kf) {
-            mkf = kf;
+        if (keyframes.isEmpty() || !(keyframes.get(keyframes.size() - 1) instanceof MovementKeyframe)) {
+            keyframes.add(mkf = new MovementKeyframe(getUsedIDs()));
         } else {
-            keyframes.add(mkf = new MovementKeyframe());
+            mkf = (MovementKeyframe) keyframes.get(keyframes.size() - 1);
         }
 
         mkf.addFrame(agents);
     }
 
-    void addFrame(Selection[] selections, int seconds) {
-
+    void addFrame(Selection[] selections, float seconds) {
+        int id = getUsedIDs();
+        keyframes.add(new SelectionKeyframe(selections, seconds, id));
     }
 
-    void addFrame(int seconds) {
-
-    }
-
-    private static float convertDurationToSeconds(float x) {
+    static float convertDurationToSeconds(float x) {
         if (x <= 65) {
             return x * (float) Math.exp(-x / 81.25);
         }
         return 0.1f * (float) Math.pow(x - 65, 0.85) + 29.21f;
-//        return x / 30f;
     }
 
     private static String getSVG(int width, int height, float seconds, String animations, String circles) {
@@ -107,6 +109,8 @@ class BoardAnimation {
                     <style>
                         circle {
                             r: 0.5;
+                        }
+                        g > * {
                             animation: %ss linear forwards;
                         }
                 %s    </style>
@@ -185,18 +189,39 @@ class BoardAnimation {
 
         TextStringBuilder circles = new TextStringBuilder();
         TextStringBuilder animations = new TextStringBuilder();
-        final float duration = convertDurationToSeconds(config.getStepsPerGen()); // in seconds todo convert to total seconds
+        final float duration = getDuration();
 
-        MovementKeyframe mkf = (MovementKeyframe) keyframes.get(0);
-        mkf.addCircles(circles);
+        float time = 0f;
+        for (int i = 0; i < keyframes.size(); i++) {
+            AnimationKeyframe kf = keyframes.get(i);
+            kf.writeElements(circles);
+            if (kf instanceof MovementKeyframe mkf) {
+                float stretch = 0;
 
-        for (AnimationKeyframe kf : keyframes) {
-            kf.write(animations, duration);
+                for (int j = i + 1; j < keyframes.size(); j++) {
+                    if (keyframes.get(j) instanceof MovementKeyframe) break;
+                    stretch += keyframes.get(j).getDuration();
+                }
+
+                mkf.writeAnimations(animations, duration, time, stretch);
+            } else {
+                kf.writeAnimations(animations, duration, time);
+            }
+            time += kf.getDuration();
         }
+        assert Math.abs(duration - time) < 0.0001;
 
         String svg = getSVG(width, height, duration, animations.toString(), circles.toString());
         svg = compress(svg);
         writeToFile(svg, file);
+    }
+
+    private float getDuration() {
+        float dur = 0f;
+        for (AnimationKeyframe kf : keyframes) {
+            dur += kf.getDuration();
+        }
+        return dur;
     }
 
     private static void writeToFile(String content, File file) {

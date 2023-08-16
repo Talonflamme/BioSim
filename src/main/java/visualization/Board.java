@@ -77,13 +77,6 @@ public class Board {
     }
 
     /**
-     * Waits for the specified amount of seconds (holds the current frame).
-     */
-    public void waitSeconds(int seconds) {
-        animation.addFrame(seconds);
-    }
-
-    /**
      * The method to start recording. This essentially only assigns initializes {@link #animation}.
      * Still needs to be called before calling {@link #addFrame}
      */
