@@ -2,7 +2,7 @@ package visualization;
 
 import org.apache.commons.text.TextStringBuilder;
 import simulation.Agent;
-import simulation.Direction;
+import simulation.config.Selection;
 import simulation.config.SimulationConfig;
 
 import java.awt.*;
@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,11 +21,11 @@ import static visualization.Board.*;
 
 class BoardAnimation {
     private final SimulationConfig config;
-    private final Hashtable<Agent, ArrayList<Movement>> movementTable;
+    private final ArrayList<AnimationKeyframe> keyframes;
 
     BoardAnimation(SimulationConfig config) {
         this.config = config;
-        this.movementTable = new Hashtable<>();
+        this.keyframes = new ArrayList<>();
     }
 
     /**
@@ -41,14 +40,14 @@ class BoardAnimation {
     private static final Pattern colorFormatRegex = Pattern.compile("(.)\\1(.)\\2(.)\\3(?:(.)\\4)?$",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
-    private static String format(float f, int maxDecimals) {
+    static String format(float f, int maxDecimals) {
         if (maxDecimals <= 0) return String.valueOf(Math.round(f));
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
         DecimalFormat df = new DecimalFormat("#." + "#".repeat(maxDecimals), symbols);
         return df.format(f);
     }
 
-    private static String format(Color c) {
+    static String format(Color c) {
         String color = "#%08x".formatted(c.getRGB());
         if (c.getAlpha() == 255) {
             color = "#" + color.substring(3);
@@ -62,36 +61,24 @@ class BoardAnimation {
     }
 
     void addFrame(Agent[] agents) {
-        for (Agent agent : agents) {
-            int x = agent.getX();
-            int y = agent.getY();
-            int lx = agent.getLastX();
-            int ly = agent.getLastY();
-
-            ArrayList<Movement> movements;
-            if (movementTable.containsKey(agent)) {
-                movements = movementTable.get(agent);
-            } else {
-                movements = new ArrayList<>();
-                movementTable.put(agent, movements);
-            }
-
-            Movement last = movements.isEmpty() ? null : movements.get(movements.size() - 1);
-            boolean addToLast = last != null && last.accept(lx, ly, x, y);
-            if (addToLast) {
-                last.add(x, y);
-            } else {
-                movements.add(new Movement(lx, ly, x, y));
-            }
+        MovementKeyframe mkf;
+        if (keyframes.isEmpty()) {
+            keyframes.add(mkf = new MovementKeyframe());
+        } else if (keyframes.get(keyframes.size() - 1) instanceof MovementKeyframe kf) {
+            mkf = kf;
+        } else {
+            keyframes.add(mkf = new MovementKeyframe());
         }
+
+        mkf.addFrame(agents);
     }
 
-    private static void addToKeyframes(TextStringBuilder sb, float durPercentage, int x, int y) {
-        sb.appendPadding(4, ' ')
-                .append(format(durPercentage * 100, 2)).appendln("% {")
-                .appendPadding(8, ' ').append("cx: ").append(x).appendln(";")
-                .appendPadding(8, ' ').append("cy: ").append(y).appendln(";")
-                .appendPadding(4, ' ').appendln('}');
+    void addFrame(Selection[] selections, int seconds) {
+
+    }
+
+    void addFrame(int seconds) {
+
     }
 
     private static float convertDurationToSeconds(float x) {
@@ -102,10 +89,9 @@ class BoardAnimation {
 //        return x / 30f;
     }
 
-    private static String getSVG(int width, int height, int duration, String animations, String circles) {
+    private static String getSVG(int width, int height, float seconds, String animations, String circles) {
         int actualWidth = Math.min(width * SCALE, 1500);
         int actualHeight = Math.min(height * SCALE, 750);
-        float seconds = convertDurationToSeconds(duration);
         // language=SVG
         return """
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d" fill="none">
@@ -199,32 +185,14 @@ class BoardAnimation {
 
         TextStringBuilder circles = new TextStringBuilder();
         TextStringBuilder animations = new TextStringBuilder();
-        final int duration = config.getStepsPerGen(); // in seconds
+        final float duration = convertDurationToSeconds(config.getStepsPerGen()); // in seconds todo convert to total seconds
 
-        movementTable.forEach((agent, movements) -> {
-            Movement first = movements.get(0);
-            boolean hasAnimation = movements.size() > 1 || first.didMove();
+        MovementKeyframe mkf = (MovementKeyframe) keyframes.get(0);
+        mkf.addCircles(circles);
 
-            circles.append("""
-                    <circle cx="%d" cy="%d" fill="%s"%s />
-                    """, first.fromX, first.fromY, format(agent.getBrain().getUniqueColor()), hasAnimation ? " style=\"animation-name: kf" + agent.getID() + '"' : "");
-
-            if (!hasAnimation) return;
-
-            animations.append("@keyframes kf")
-                    .append(agent.getID())
-                    .appendln(" {");
-            addToKeyframes(animations, 0, first.fromX, first.fromY);
-
-            int currentTime = 0;
-            for (Movement movement : movements) {
-                currentTime += movement.duration;
-                float durPercentage = currentTime / (float) duration;
-                addToKeyframes(animations, durPercentage, movement.toX, movement.toY);
-            }
-            assert currentTime == duration;
-            animations.appendln('}');
-        });
+        for (AnimationKeyframe kf : keyframes) {
+            kf.write(animations, duration);
+        }
 
         String svg = getSVG(width, height, duration, animations.toString(), circles.toString());
         svg = compress(svg);
@@ -241,42 +209,5 @@ class BoardAnimation {
 
     void save(String path) {
         save(new File(path));
-    }
-
-    static class Movement {
-        int fromX, toX;
-        int fromY, toY;
-        int duration;
-
-        Movement(int fromX, int fromY, int toX, int toY) {
-            this.fromX = fromX;
-            this.fromY = fromY;
-            this.toX = toX;
-            this.toY = toY;
-            this.duration = 1;
-        }
-
-        Direction direction() {
-            return Direction.get(toX - fromX, toY - fromY);
-        }
-
-        boolean accept(int oldX, int oldY, int newX, int newY) {
-            return Direction.get(newX - oldX, newY - oldY) == direction();
-        }
-
-        void add(int newX, int newY) {
-            this.toX = newX;
-            this.toY = newY;
-            this.duration++;
-        }
-
-        boolean didMove() {
-            return this.fromX != this.toX || this.fromY != this.toY;
-        }
-
-        @Override
-        public String toString() {
-            return "Movement[%d -> %d, %d -> %d, duration=%d]".formatted(fromX, toX, fromY, toY, duration);
-        }
     }
 }

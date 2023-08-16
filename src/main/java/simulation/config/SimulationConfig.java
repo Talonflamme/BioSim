@@ -132,4 +132,8 @@ public class SimulationConfig {
         }
         return true;
     }
+
+    public Selection[] getSelection() {
+        return selection;
+    }
 }

@@ -97,4 +97,11 @@ public class Agent {
     public int getID() {
         return id;
     }
+
+    /**
+     * Sets {@link #alive} to {@code false}.
+     */
+    public void die() {
+        this.alive = false;
+    }
 }

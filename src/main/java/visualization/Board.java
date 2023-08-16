@@ -57,11 +57,30 @@ public class Board {
         return img;
     }
 
+    /**
+     * Creates a snapshot of the current position of agents.
+     */
     public void addFrame(Agent[] agents) {
         if (animation == null) {
             throw new NullPointerException("animation is null, did you forget to call `startRecording()`?");
         }
         animation.addFrame(agents);
+    }
+
+    /**
+     * Adds the animation for visualizing how selections kill agents/don't kill agents.
+     * @param config the Config from which to take the {@link SimulationConfig#getSelection selections}.
+     * @param seconds the amount of seconds this animation should last.
+     */
+    public void addSelection(SimulationConfig config, int seconds) {
+        animation.addFrame(config.getSelection(), seconds);
+    }
+
+    /**
+     * Waits for the specified amount of seconds (holds the current frame).
+     */
+    public void waitSeconds(int seconds) {
+        animation.addFrame(seconds);
     }
 
     /**
