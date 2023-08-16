@@ -124,6 +124,17 @@ public class Simulation {
     }
 
     /**
+     * Kill all agents where {@link #config config}.{@link SimulationConfig#survives} returns {@code false}.
+     */
+    private void killAgents() {
+        for (Agent agent : agents) {
+            if (!config.survives(agent)) {
+                agent.die();
+            }
+        }
+    }
+
+    /**
      * Start the simulation.
      *
      * @param generations The amount of generations to generate.
@@ -151,8 +162,12 @@ public class Simulation {
                 System.out.printf("Generation done: %d/%d%n", gen + 1, generations);
             }
 
-            if (true) break;
+            visualizer.addSelection(config, 2);
+            killAgents();
+            visualizer.addFrame(agents);
+            visualizer.waitSeconds(2);
 
+            if (true) break;
             if (gen == generations - 1) continue;
 
             state = SimulationState.NewGeneration;
@@ -257,6 +272,7 @@ public class Simulation {
     }
 
     private void step() {
+
         state = SimulationState.OnAgentThink;
         for (Agent agent : agents) {
             agent.step();
@@ -267,7 +283,6 @@ public class Simulation {
         for (Agent agent : agents) {
             agent.afterStep(agent.getX(), agent.getY(), progress);
         }
-
         // create image
         visualizer.addFrame(agents);
     }
