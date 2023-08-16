@@ -84,7 +84,12 @@ class MovementKeyframe implements AnimationKeyframe {
     }
 
     int getDuration() {
-        return 300; // todo
+        ArrayList<Movement> moves = keyframes.get(keyframes.keys().nextElement());
+        int dur = 0;
+        for (Movement m : moves) {
+            dur += m.duration;
+        }
+        return dur;
     }
 
     static class Movement {

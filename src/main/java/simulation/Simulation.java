@@ -162,7 +162,6 @@ public class Simulation {
                 System.out.printf("Generation done: %d/%d%n", gen + 1, generations);
             }
 
-            visualizer.addFrame(agents);
             visualizer.addSelection(config, 2);
             killAgents();
             visualizer.addFrame(agents);
@@ -273,8 +272,6 @@ public class Simulation {
     }
 
     private void step() {
-        // create image
-        visualizer.addFrame(agents);
 
         state = SimulationState.OnAgentThink;
         for (Agent agent : agents) {
@@ -286,6 +283,8 @@ public class Simulation {
         for (Agent agent : agents) {
             agent.afterStep(agent.getX(), agent.getY(), progress);
         }
+        // create image
+        visualizer.addFrame(agents);
     }
 
     /**
