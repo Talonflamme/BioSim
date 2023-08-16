@@ -1,11 +1,11 @@
 {
-  "stepsPerGen": 300,
+  "stepsPerGen": 20,
   "genes": 4,
-  "boardHeight": 128,
-  "boardWidth": 128,
+  "boardHeight": 16,
+  "boardWidth": 16,
   "maxInnerNeurons": 1,
-  "mutationRate": 0.001,
-  "populationSize": 1000,
+  "mutationRate": 0.03,
+  "populationSize": 10,
   "selection": [
     {
       "begin": 0,
