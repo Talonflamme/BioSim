@@ -15,9 +15,9 @@
         "regions": [
           {
             "type": "rect",
-            "height": 0,
-            "width": 0,
-            "x": 0,
+            "height": "100%",
+            "width": "50%",
+            "x": "50%",
             "y": 0
           }
         ]

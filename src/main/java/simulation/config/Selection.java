@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
+import simulation.Agent;
 
 import java.util.function.Predicate;
 
@@ -27,6 +28,24 @@ public abstract class Selection {
         }
         if (x < minimum) {
             throw new ConfigError("Property %s (%d) should at least %d".formatted(propName, x, minimum));
+        }
+        return x;
+    }
+
+    static int getLength(ObjectNode node, String propName, int minimum, int oneHundred) throws ConfigError {
+        JsonNode n = assertType(node, propName, x -> x.isTextual() || x.isInt());
+        int x;
+        if (n.isInt()) {
+            x = n.asInt();
+        } else {
+            String text = n.asText();
+            if (!text.matches("^\\d{1,2}%|100%$")) {
+                throw new ConfigError("Property %s (%s) is no percentage".formatted(propName, text));
+            }
+            x = Math.round(Integer.parseInt(text.substring(0, text.length() - 1)) / 100f * oneHundred);
+        }
+        if (x < minimum) {
+            throw new ConfigError("Property %s (%s) less than minimum %d".formatted(propName, n, minimum));
         }
         return x;
     }
@@ -66,16 +85,16 @@ public abstract class Selection {
         return n;
     }
 
-    public static Selection parse(ObjectNode obj) throws ConfigError {
+    public static Selection parse(ObjectNode obj, SimulationConfig config) throws ConfigError {
         int begin = getInt(obj, "begin", 0);
         int end = getInt(obj, "end", begin + 1, -1);
         ObjectNode args = getObj(obj, "args", true);
         return switch (getType(obj)) {
-            case DeathZone -> new DeathZone(begin, end, args);
+            case DeathZone -> new DeathZone(begin, end, args, config);
         };
     }
 
-    public static Selection[] parse(ObjectNode[] array) throws ConfigError {
+    public static Selection[] parse(ObjectNode[] array, SimulationConfig config) throws ConfigError {
         Selection[] result = new Selection[array.length];
 
         if (result.length == 0) {
@@ -83,11 +102,16 @@ public abstract class Selection {
         }
 
         for (int i = 0; i < result.length; i++) {
-            result[i] = parse(array[i]);
+            result[i] = parse(array[i], config);
         }
 
         return result;
     }
 
     public abstract SelectionType getType();
+
+    /**
+     * Returns whether the agent survives this selection.
+     */
+    public abstract boolean survives(Agent agent);
 }

@@ -6,28 +6,22 @@
   "additionalProperties": false,
   "properties": {
     "stepsPerGen": {
-      "type": "integer",
-      "minimum": 1
+      "$ref": "#/definitions/positiveInteger"
     },
     "populationSize": {
-      "type": "integer",
-      "minimum": 1
+      "$ref": "#/definitions/positiveInteger"
     },
     "boardWidth": {
-      "type": "integer",
-      "minimum": 1
+      "$ref": "#/definitions/positiveInteger"
     },
     "boardHeight": {
-      "type": "integer",
-      "minimum": 1
+      "$ref": "#/definitions/positiveInteger"
     },
     "genes": {
-      "type": "integer",
-      "minimum": 1
+      "$ref": "#/definitions/positiveInteger"
     },
     "maxInnerNeurons": {
-      "type": "integer",
-      "minimum": 1,
+      "$ref": "#/definitions/positiveInteger",
       "maximum": 128
     },
     "mutationRate": {
@@ -42,12 +36,17 @@
         "type": "object",
         "properties": {
           "begin": {
-            "type": "integer",
-            "minimum": 0
+            "$ref": "#/definitions/positiveInteger0"
           },
           "end": {
-            "type": "integer",
-            "minimum": -1
+            "oneOf": [
+              {
+                "$ref": "#/definitions/positiveInteger"
+              },
+              {
+                "const": -1
+              }
+            ]
           },
           "type": {
             "enum": [
@@ -70,19 +69,17 @@
                               "const": "rect"
                             },
                             "x": {
-                              "type": "integer",
-                              "minimum": 0
+                              "$ref": "#/definitions/length"
                             },
                             "y": {
-                              "type": "integer",
-                              "minimum": 0
+                              "$ref": "#/definitions/length"
                             },
                             "width": {
-                              "type": "integer",
+                              "$ref": "#/definitions/length",
                               "minimum": 1
                             },
                             "height": {
-                              "type": "integer",
+                              "$ref": "#/definitions/length",
                               "minimum": 1
                             }
                           },
@@ -129,5 +126,26 @@
     "populationSize",
     "stepsPerGen",
     "selection"
-  ]
+  ],
+  "definitions": {
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "positiveInteger0": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "length": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^\\d{1,2}%|100%$"
+        },
+        {
+          "$ref": "#/definitions/positiveInteger0"
+        }
+      ]
+    }
+  }
 }

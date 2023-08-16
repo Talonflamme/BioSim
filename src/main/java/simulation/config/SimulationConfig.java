@@ -4,6 +4,7 @@ package simulation.config;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import simulation.Agent;
 
 public class SimulationConfig {
     /**
@@ -81,7 +82,7 @@ public class SimulationConfig {
         this.genes = genes;
         this.maxInnerNeurons = maxInnerNeurons;
         this.mutationRate = mutationRate;
-        this.selection = Selection.parse(selection);
+        this.selection = Selection.parse(selection, this);
 
         if (this.stepsPerGen < 1) {
             throw new ConfigError("stepsPerGen should be greater than 1");
@@ -117,5 +118,18 @@ public class SimulationConfig {
                 ", maxInnerNeurons=" + maxInnerNeurons +
                 ", mutationRate=" + mutationRate +
                 ']';
+    }
+
+    /**
+     * Returns whether agent should survive. Defaults to true and checks if any {@link #selection}
+     * kills the agent.
+     */
+    public boolean survives(Agent agent) {
+        for (Selection s : selection) {
+            if (!s.survives(agent)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

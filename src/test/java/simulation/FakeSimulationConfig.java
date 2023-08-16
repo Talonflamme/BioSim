@@ -1,5 +1,6 @@
 package simulation;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import simulation.config.ConfigError;
 import simulation.config.SimulationConfig;
 
@@ -13,7 +14,7 @@ public class FakeSimulationConfig extends SimulationConfig {
     private Float mutationRate;
 
     public FakeSimulationConfig() throws ConfigError {
-        super(1, 1, 1, 1, 1, 1, 0);
+        super(1, 1, 1, 1, 1, 1, 0, new ObjectNode[0]);
     }
 
     @Override
