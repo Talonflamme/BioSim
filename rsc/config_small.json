@@ -1,0 +1,27 @@
+{
+  "stepsPerGen": 20,
+  "genes": 4,
+  "boardHeight": 16,
+  "boardWidth": 16,
+  "maxInnerNeurons": 1,
+  "mutationRate": 0.03,
+  "populationSize": 10,
+  "selection": [
+    {
+      "begin": 0,
+      "end": -1,
+      "type": "DeathZone",
+      "args": {
+        "regions": [
+          {
+            "type": "rect",
+            "height": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          }
+        ]
+      }
+    }
+  ]
+}
