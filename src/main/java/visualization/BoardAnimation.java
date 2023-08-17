@@ -2,6 +2,7 @@ package visualization;
 
 import org.apache.commons.text.TextStringBuilder;
 import simulation.Agent;
+import simulation.Simulation;
 import simulation.config.Selection;
 import simulation.config.SimulationConfig;
 
@@ -56,7 +57,7 @@ public class BoardAnimation {
         if (x <= 65) {
             return x * (float) Math.exp(-x / 81.25);
         }
-        return x / 20f;
+        return x / 45f;
     }
 
     private static String getSVG(int width, int height, float seconds, String animations, String circles) {
@@ -114,15 +115,6 @@ public class BoardAnimation {
         return sb.toString();
     }
 
-    private static String bytesToString(int bytes) {
-        if (bytes >= 1e6) {
-            return "%sMB".formatted(Math.round(bytes / 1e5) / 10f);
-        } else if (bytes >= 1e3) {
-            return "%sKiB".formatted(Math.round(bytes / 1e2) / 10f);
-        }
-        return bytes + "B";
-    }
-
     private static final Pattern uselessWhitespace = Pattern.compile(";[\r\n\\s]*(?=})|([>{};:])\\s+|\r?\n|\\s+(?=[\\s<;>{}@]|$|/>)|(?<=^|\\D)0(?=\\.)");
     private static final Pattern compressKeyframeNamesRegex = Pattern.compile("(?<=@keyframes\\s|animation-name:)kf(\\d+)(?:,kf(\\d+))?"); // currently only 2 animations
     private static final Pattern duplicateKeyFramesPortions = Pattern.compile("([\\d.]+%)\\{([^}]+)}([\\d.]+%)\\{\\2");
@@ -153,11 +145,7 @@ public class BoardAnimation {
         });
 
         int afterLength = str.getBytes().length;
-
-        System.out.printf("compressed: %s - %s = %s%n",
-                blue(bytesToString(beforeLength)),
-                yellow(Math.round(1000 - (float) afterLength / beforeLength * 1000) / 10f + "%"),
-                green(bytesToString(afterLength)));
+        Simulation.activeSimulation.getReport().compressed(beforeLength, afterLength);
         return str;
     }
 

@@ -68,6 +68,19 @@ public class Report implements AutoCloseable {
         }
     }
 
+    public void compressed(int beforeLength, int afterLength) {
+        String str = "compressed: %s - %s = %s".formatted(
+                blue(bytesToString(beforeLength)),
+                yellow(Math.round(1000 - (float) afterLength / beforeLength * 1000) / 10f + "%"),
+                green(bytesToString(afterLength)));
+        if (isEnabled(Feature.Compressed)) {
+            synchronized (file) {
+                file.println(str); // for compressed, we don't always log to file
+            }
+            System.out.println(str);
+        }
+    }
+
     public void enable(Feature feature) {
         this.enabledFeatures.set(feature.ordinal());
     }
@@ -85,8 +98,18 @@ public class Report implements AutoCloseable {
         file.close();
     }
 
+    private static String bytesToString(int bytes) {
+        if (bytes >= 1e6) {
+            return "%sMB".formatted(Math.round(bytes / 1e5) / 10f);
+        } else if (bytes >= 1e3) {
+            return "%sKiB".formatted(Math.round(bytes / 1e2) / 10f);
+        }
+        return bytes + "B";
+    }
+
     public enum Feature {
         Mutation,
+        Compressed,
         AllGenerations
     }
 }
