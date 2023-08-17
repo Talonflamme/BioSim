@@ -61,10 +61,19 @@ public class SimulationConfig {
         return mutationRate;
     }
 
+    public boolean isUniqueColors() {
+        return uniqueColors;
+    }
+
     /**
      * The rate of mutations. E.g: 0.001 = 0.1%, every 1 thousand bits copied, there is an error.
      */
     private final float mutationRate;
+    /**
+     * If set to {@code true}, each agent will get a color based on its brain.
+     * If set to {@code false}, each agent will get a color based on it surviving.
+     */
+    private final boolean uniqueColors;
 
     @JsonCreator
     public SimulationConfig(@JsonProperty(value = "stepsPerGen", required = true) int stepsPerGen,
@@ -74,7 +83,8 @@ public class SimulationConfig {
                             @JsonProperty(value = "genes", required = true) int genes,
                             @JsonProperty(value = "maxInnerNeurons", required = true) int maxInnerNeurons,
                             @JsonProperty(value = "mutationRate", required = true) float mutationRate,
-                            @JsonProperty(value = "selection", required = true) ObjectNode[] selection) throws ConfigError {
+                            @JsonProperty(value = "selection", required = true) ObjectNode[] selection,
+                            @JsonProperty(value = "uniqueColors", defaultValue = "false") boolean uniqueColors) throws ConfigError {
         this.stepsPerGen = stepsPerGen;
         this.populationSize = populationSize;
         this.boardWidth = boardWidth;
@@ -83,6 +93,7 @@ public class SimulationConfig {
         this.maxInnerNeurons = maxInnerNeurons;
         this.mutationRate = mutationRate;
         this.selection = Selection.parse(selection, this);
+        this.uniqueColors = uniqueColors;
 
         if (this.stepsPerGen < 1) {
             throw new ConfigError("stepsPerGen should be greater than 1");
@@ -110,14 +121,14 @@ public class SimulationConfig {
     @Override
     public String toString() {
         return "SimulationConfig[" +
-                "stepsPerGen=" + stepsPerGen +
-                ", populationSize=" + populationSize +
-                ", boardWidth=" + boardWidth +
-                ", boardHeight=" + boardHeight +
-                ", genes=" + genes +
-                ", maxInnerNeurons=" + maxInnerNeurons +
-                ", mutationRate=" + mutationRate +
-                ']';
+               "stepsPerGen=" + stepsPerGen +
+               ", populationSize=" + populationSize +
+               ", boardWidth=" + boardWidth +
+               ", boardHeight=" + boardHeight +
+               ", genes=" + genes +
+               ", maxInnerNeurons=" + maxInnerNeurons +
+               ", mutationRate=" + mutationRate +
+               ']';
     }
 
     /**

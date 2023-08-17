@@ -164,7 +164,7 @@ public class Simulation {
 
             visualizer.addSelection(config, 5);
             killAgents();
-//            visualizer.addFrame(agents);
+            visualizer.addAlive(agents, 2.5f);
 
             if (true) break;
             if (gen == generations - 1) continue;
@@ -283,7 +283,7 @@ public class Simulation {
             agent.afterStep(agent.getX(), agent.getY(), progress);
         }
         // create image
-        visualizer.addFrame(agents);
+        visualizer.addMovement(agents);
     }
 
     /**

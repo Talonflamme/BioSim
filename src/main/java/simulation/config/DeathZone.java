@@ -132,8 +132,8 @@ public class DeathZone extends Selection {
                     .append("0%{opacity:0}")
                     .append(format(start * 100, 2)).append("%{opacity:0}")
                     .append(format((end + start) * 50f, 2)).append("%{opacity:1}")
-                    .append(format(end * 100f, 2)).append("%{opacity:0}")
-                    .append("}");
+                    .append(format(end * 100f, 2)).append("%{opacity:0;visibility:hidden}")
+                    .appendln("}");
         }
 
         @Override
@@ -145,8 +145,8 @@ public class DeathZone extends Selection {
         public void writeToElements(TextStringBuilder elements, int id) {
             // language=XML
             elements.appendln("""
-                    <path d="M%d %dh%dv%dH%1$dV%2$d" style="fill:%s;animation-name:kf%d" />
-                    """.formatted(x, y, width, height, DEATH_ZONE_COLOR, id));
+                    <path d="M%d %dh%dv%dH%1$dV%2$d" stroke="%s" stroke-width="2" style="animation-name:kf%d" />
+                    """.formatted(x + 1, y + 1, width - 2, height - 2, DEATH_ZONE_COLOR, id));
         }
     }
 }

@@ -29,6 +29,10 @@
       "minimum": 0,
       "maximum": 1
     },
+    "uniqueColors": {
+      "type": "boolean",
+      "description": "If set to true, each agent will get a color based on its brain. If set to false, each agent will get a color based on it surviving."
+    },
     "selection": {
       "type": "array",
       "minItems": 1,

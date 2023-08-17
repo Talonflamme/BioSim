@@ -11,7 +11,7 @@ import static visualization.BoardAnimation.convertDurationToSeconds;
 import static visualization.BoardAnimation.format;
 
 class MovementKeyframe implements AnimationKeyframe {
-    private final Hashtable<Agent, ArrayList<Movement>> keyframes;
+    final Hashtable<Agent, ArrayList<Movement>> keyframes;
     private final int idOffset;
 
     MovementKeyframe(int idOffset) {
@@ -46,14 +46,16 @@ class MovementKeyframe implements AnimationKeyframe {
 
     @Override
     public void writeElements(TextStringBuilder circles) {
+        circles.append("<g transform=\"translate(0.5, 0.5)\">");
         keyframes.forEach((agent, movements) -> {
             Movement first = movements.get(0);
             boolean hasAnimation = movements.size() > 1 || first.didMove();
             int id = idOffset + agent.getID();
             circles.append("""
                     <circle cx="%d" cy="%d" fill="%s"%s />
-                    """, first.fromX, first.fromY, format(agent.getBrain().getUniqueColor()), hasAnimation ? " style=\"animation-name: kf" + id + '"' : "");
+                    """, first.fromX, first.fromY, format(agent.getBrain().getColor()), hasAnimation ? " style=\"animation-name: kf" + id + '"' : "");
         });
+        circles.append("</g>");
     }
 
     /**

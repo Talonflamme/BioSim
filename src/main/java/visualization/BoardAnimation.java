@@ -57,7 +57,7 @@ public class BoardAnimation {
             color = "#" + color.substring(3) + color.substring(1, 3);
         }
         Matcher matcher = colorFormatRegex.matcher(color);
-        return matcher.replaceAll("$2$3$4$1");
+        return matcher.replaceAll("$1$2$3$4");
     }
 
     private int getUsedIDs() {
@@ -79,6 +79,10 @@ public class BoardAnimation {
         mkf.addFrame(agents);
     }
 
+    void addAlive(Agent[] agents, float fadeAwayTransition) {
+        keyframes.add(new AliveKeyframe(agents, getUsedIDs(), config, fadeAwayTransition));
+    }
+
     void addFrame(Selection[] selections, float seconds) {
         int id = getUsedIDs();
         keyframes.add(new SelectionKeyframe(selections, seconds, id));
@@ -88,7 +92,7 @@ public class BoardAnimation {
         if (x <= 65) {
             return x * (float) Math.exp(-x / 81.25);
         }
-        return 0.1f * (float) Math.pow(x - 65, 0.85) + 29.21f;
+        return x / 20f;
     }
 
     private static String getSVG(int width, int height, float seconds, String animations, String circles) {
@@ -110,15 +114,13 @@ public class BoardAnimation {
                         circle {
                             r: 0.5;
                         }
-                        g > * {
+                        * {
                             animation: %ss linear forwards;
                         }
                 %s    </style>
                     <path d="M0 0h%1$dv%2$dH0z" fill="%s" stroke="%5$s" vector-effect="non-scaling-stroke" />
                     <path d="M0 0h%1$dv%2$dH0z" fill="url(#_g)" />
-                    <g transform="translate(0.5 0.5)">
-                %s    </g>
-                </svg>
+                %s</svg>
                 """.formatted(width, height, actualWidth, actualHeight,
                 format(RECT_OUTLINE_COLOR),
                 format(seconds, 2),
@@ -127,6 +129,10 @@ public class BoardAnimation {
                 circles.indent(8));
     }
 
+
+    private static String uniqueIdentifier(String s) {
+        return uniqueIdentifier(Integer.parseInt(s));
+    }
 
     private static String uniqueIdentifier(int id) {
         String letters0 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -154,7 +160,7 @@ public class BoardAnimation {
     }
 
     private static final Pattern uselessWhitespace = Pattern.compile(";[\r\n\\s]*(?=})|([>{};:])\\s+|\r?\n|\\s+(?=[\\s<;>{}@]|$|/>)|(?<=^|\\D)0(?=\\.)");
-    private static final Pattern compressKeyframeNamesRegex = Pattern.compile("(?<=@keyframes\\s|animation-name:)kf(\\d+)");
+    private static final Pattern compressKeyframeNamesRegex = Pattern.compile("(?<=@keyframes\\s|animation-name:)kf(\\d+)(?:,kf(\\d+))?"); // currently only 2 animations
     private static final Pattern duplicateKeyFramesPortions = Pattern.compile("([\\d.]+%)\\{([^}]+)}([\\d.]+%)\\{\\2");
     private static final Pattern oneHundredPercentPortion = Pattern.compile("(?:(?<=[{]|\\d%,)100%|(\\d%\\{cx:\\d+;cy:\\d+})100%)(?=\\{cx)");
     private static final Pattern unnecessaryCxCyDefinition = Pattern.compile("(<circle[^/]*)\\s*c[xy]=\"0\"\\s*([^/]*/)");
@@ -172,7 +178,15 @@ public class BoardAnimation {
         str = unnecessaryCxCyDefinition.matcher(str).replaceAll("$1$2");
 
         Matcher matcher = compressKeyframeNamesRegex.matcher(str);
-        str = matcher.replaceAll(matchResult -> uniqueIdentifier(Integer.parseInt(matchResult.group(1))));
+        str = matcher.replaceAll(matchResult -> {
+            String g1 = matchResult.group(1);
+            String g2 = matchResult.group(2);
+            if (g2 == null) {
+                return uniqueIdentifier(g1);
+            } else {
+                return uniqueIdentifier(g1) + "," + uniqueIdentifier(g2);
+            }
+        });
 
         int afterLength = str.getBytes().length;
 
@@ -192,9 +206,19 @@ public class BoardAnimation {
         final float duration = getDuration();
 
         float time = 0f;
+        MovementKeyframe lastMkf = null;
         for (int i = 0; i < keyframes.size(); i++) {
             AnimationKeyframe kf = keyframes.get(i);
-            kf.writeElements(circles);
+            if (kf instanceof MovementKeyframe mkf) {
+                lastMkf = mkf;
+            }
+
+            if (kf instanceof AliveKeyframe akf) {
+                akf.writeElements(circles, lastMkf);
+            } else {
+                kf.writeElements(circles);
+            }
+
             if (kf instanceof MovementKeyframe mkf) {
                 float stretch = 0;
 

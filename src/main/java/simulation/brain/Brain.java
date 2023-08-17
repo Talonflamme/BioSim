@@ -237,6 +237,12 @@ public class Brain {
         return "Brain[\"" + genomeToString() + "\"]";
     }
 
+    private Color color;
+
+    public Color getColor() {
+        return color != null ? color : getUniqueColor();
+    }
+
     public Color getUniqueColor() {
         int lastGene = genome[genome.length - 1];
         int r = ((genome.length & 1)
@@ -250,6 +256,10 @@ public class Brain {
         int g = ((r & 0b11111) << 3);
         int b = ((r & 0b111) << 5);
         return new Color(r, g, b);
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
     }
 
     public Connection[] getConnections() {

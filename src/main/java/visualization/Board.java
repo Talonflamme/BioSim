@@ -40,7 +40,7 @@ public class Board {
 
         for (Agent agent : agents) {
             if (!agent.isAlive()) continue;
-            g.setColor(agent.getBrain().getUniqueColor());
+            g.setColor(agent.getBrain().getColor());
             float x = agent.getX() * SCALE + PADDING_X / 2f;
             float y = agent.getY() * SCALE + PADDING_Y / 2f;
             g.fillOval(Math.round(x), Math.round(y), SCALE, SCALE);
@@ -60,7 +60,7 @@ public class Board {
     /**
      * Creates a snapshot of the current position of agents.
      */
-    public void addFrame(Agent[] agents) {
+    public void addMovement(Agent[] agents) {
         if (animation == null) {
             throw new NullPointerException("animation is null, did you forget to call `startRecording()`?");
         }
@@ -77,8 +77,16 @@ public class Board {
     }
 
     /**
+     * Creates a snapshot. Only processes the alive state of agents. Not the position.
+     * @param fadeAwayTransition the transition in seconds of the agents fading away.
+     */
+    public void addAlive(Agent[] agents, float fadeAwayTransition) {
+        animation.addAlive(agents, fadeAwayTransition);
+    }
+
+    /**
      * The method to start recording. This essentially only assigns initializes {@link #animation}.
-     * Still needs to be called before calling {@link #addFrame}
+     * Still needs to be called before calling {@link #addMovement}
      */
     public void startRecording() {
         animation = new BoardAnimation(config);
