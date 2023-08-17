@@ -10,11 +10,11 @@ public class Board {
     static final int PADDING_X = 220;
     static final int PADDING_Y = 220;
     static final int SCALE = 20;
-    //    static final Color BACKGROUND_COLOR = Color.WHITE;
-    static final Color BACKGROUND_COLOR = new Color(0x1E1F22);
-    static final Color RECT_OUTLINE_COLOR = new Color(0xadd8e6); // light blue
+    public static final Color BACKGROUND_COLOR = new Color(0x1E1F22);
+    public static final Color RECT_OUTLINE_COLOR = new Color(0xadd8e6); // light blue
 
     private final SimulationConfig config;
+    private boolean recording;
     private BoardAnimation animation;
 
     public Board(SimulationConfig config) {
@@ -27,6 +27,10 @@ public class Board {
 
     private int height() {
         return config.getBoardHeight() * SCALE + PADDING_Y;
+    }
+
+    public boolean isRecording() {
+        return recording;
     }
 
     private void drawAgents(Agent[] agents, Graphics2D g) {
@@ -61,8 +65,8 @@ public class Board {
      * Creates a snapshot of the current position of agents.
      */
     public void addMovement(Agent[] agents) {
-        if (animation == null) {
-            throw new NullPointerException("animation is null, did you forget to call `startRecording()`?");
+        if (!recording) {
+            return;
         }
         animation.addFrame(agents);
     }
@@ -92,6 +96,7 @@ public class Board {
      */
     public void startRecording() {
         animation = new BoardAnimation(config);
+        recording = true;
     }
 
     public void saveRecording(String path) {
