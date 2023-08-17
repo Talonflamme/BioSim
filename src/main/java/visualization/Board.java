@@ -98,4 +98,8 @@ public class Board {
         }
         animation.save(path);
     }
+
+    public void clear() {
+        animation.clear();
+    }
 }

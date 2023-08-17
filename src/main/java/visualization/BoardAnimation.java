@@ -5,14 +5,10 @@ import simulation.Agent;
 import simulation.config.Selection;
 import simulation.config.SimulationConfig;
 
-import java.awt.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,38 +22,6 @@ public class BoardAnimation {
     BoardAnimation(SimulationConfig config) {
         this.config = config;
         this.keyframes = new ArrayList<>();
-    }
-
-    /**
-     * Small optimization for shortening color hex codes.
-     * Replaces the following:
-     * <p>{@code #ffffff}</p>
-     * <p>{@code #aabbccdd}</p>
-     * Does not replace the following:
-     * <p>{@code #fffeff}</p>
-     * <p>{@code #aabbccde}</p>
-     */
-    private static final Pattern colorFormatRegex = Pattern.compile("(.)\\1(.)\\2(.)\\3(?:(.)\\4)?$",
-            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-
-    public static String format(float f, int maxDecimals) {
-        if (maxDecimals <= 0) return String.valueOf(Math.round(f));
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
-        DecimalFormat df = new DecimalFormat("#." + "#".repeat(maxDecimals), symbols);
-        return df.format(f);
-    }
-
-    public static String format(Color c) {
-        String color = "#%08x".formatted(c.getRGB());
-        if (c.getAlpha() == 255) {
-            color = "#" + color.substring(3);
-        } else if (c.getAlpha() == 0) {
-            return "#0000";
-        } else {
-            color = "#" + color.substring(3) + color.substring(1, 3);
-        }
-        Matcher matcher = colorFormatRegex.matcher(color);
-        return matcher.replaceAll("$1$2$3$4");
     }
 
     private int getUsedIDs() {
@@ -123,7 +87,7 @@ public class BoardAnimation {
                 %s</svg>
                 """.formatted(width, height, actualWidth, actualHeight,
                 format(RECT_OUTLINE_COLOR),
-                format(seconds, 2),
+                format(seconds),
                 animations.indent(8),
                 format(BACKGROUND_COLOR),
                 circles.indent(8));
@@ -214,6 +178,7 @@ public class BoardAnimation {
             }
 
             if (kf instanceof AliveKeyframe akf) {
+                assert lastMkf != null;
                 akf.writeElements(circles, lastMkf);
             } else {
                 kf.writeElements(circles);
@@ -258,5 +223,9 @@ public class BoardAnimation {
 
     void save(String path) {
         save(new File(path));
+    }
+
+    public void clear() {
+        keyframes.clear();
     }
 }

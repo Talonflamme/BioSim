@@ -6,7 +6,7 @@ import org.apache.commons.text.TextStringBuilder;
 import org.jetbrains.annotations.Nullable;
 import simulation.Agent;
 
-import static visualization.BoardAnimation.format;
+import static utility.Utility.*;
 
 public class DeathZone extends Selection {
     public static final String DEATH_ZONE_COLOR = "#8655ff";
@@ -130,9 +130,9 @@ public class DeathZone extends Selection {
             sb.append("@keyframes kf")
                     .append(id).append("{")
                     .append("0%{opacity:0}")
-                    .append(format(start * 100, 2)).append("%{opacity:0}")
-                    .append(format((end + start) * 50f, 2)).append("%{opacity:1}")
-                    .append(format(end * 100f, 2)).append("%{opacity:0;visibility:hidden}")
+                    .append(format(start * 100)).append("%{opacity:0}")
+                    .append(format((end + start) * 50f)).append("%{opacity:1}")
+                    .append(format(end * 100f)).append("%{opacity:0;visibility:hidden}")
                     .appendln("}");
         }
 

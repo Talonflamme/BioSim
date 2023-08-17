@@ -3,17 +3,18 @@ package simulation;
 import org.jetbrains.annotations.NotNull;
 import simulation.brain.Brain;
 import simulation.config.SimulationConfig;
+import simulation.reports.Report;
 import visualization.Board;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import static utility.Utility.ObjectMapper;
-import static utility.Utility.Rand;
+import static utility.Utility.*;
 
 public class Simulation {
     public static Simulation activeSimulation;
@@ -24,8 +25,9 @@ public class Simulation {
     private Agent[] agents;
     private final ArrayList<QueuedMove> queuedMoves = new ArrayList<>();
     private SimulationState state;
+    private final Report report;
 
-    public Simulation(SimulationConfig config) {
+    public Simulation(SimulationConfig config, Report report) {
         if (activeSimulation != null) {
             throw new RuntimeException("More than 1 Simulations");
         }
@@ -35,10 +37,11 @@ public class Simulation {
         this.visualizer = new Board(config);
         this.grid = new Grid(config.getBoardWidth(), config.getBoardHeight());
         activeSimulation = this;
+        this.report = report;
     }
 
-    public Simulation(File configFile) throws IOException {
-        this(ObjectMapper.readValue(configFile, SimulationConfig.class));
+    public Simulation(File configFile, Report report) throws IOException {
+        this(SimulationConfig.fromFile(configFile), report);
     }
 
     private Agent[] getAgentsFromBrains(Brain[] brains) {
@@ -94,30 +97,26 @@ public class Simulation {
         int agentNum = config.getPopulationSize();
         Brain[] brains = new Brain[agentNum];
 
-        int aliveCount = 0;
+        ArrayList<Agent> aliveParents = new ArrayList<>();
         for (Agent agent : parents) {
             if (agent.isAlive()) {
-                aliveCount++;
+                aliveParents.add(agent);
             }
         }
-        if (aliveCount == 0) throw new RuntimeException("No agents alive");
+        if (aliveParents.isEmpty()) throw new RuntimeException("No agents alive");
 
-        int minChildren = Math.floorDiv(agentNum, aliveCount);
+        int minChildren = Math.floorDiv(agentNum, aliveParents.size());
+        int count = 0;
         for (int i = 0; i < minChildren; i++) {
-            for (int j = 0; j < parents.length; j++) {
-                if (!parents[j].isAlive()) continue;
+            for (Agent parent : parents) {
+                if (!parent.isAlive()) continue;
 
-                brains[i * minChildren + j] = parents[j].getBrain().generateChild();
+                brains[count++] = parent.getBrain().generateChild();
             }
         }
-        for (int i = 0; i < agentNum - aliveCount; i++) {
-            while (true) {
-                Agent agent = Rand.choice(parents);
-                if (!agent.isAlive()) continue;
-
-                brains[aliveCount + i] = agent.getBrain().generateChild();
-                break;
-            }
+        Rand.shuffle(aliveParents);
+        for (int i = agentNum - count; i > 0; i--) {
+            brains[count++] = aliveParents.get(i).getBrain().generateChild(); // todo
         }
 
         return getAgentsFromBrains(brains);
@@ -125,13 +124,18 @@ public class Simulation {
 
     /**
      * Kill all agents where {@link #config config}.{@link SimulationConfig#survives} returns {@code false}.
+     *
+     * @return the amount of agents that died.
      */
-    private void killAgents() {
+    private int killAgents() {
+        int count = 0;
         for (Agent agent : agents) {
             if (!config.survives(agent)) {
                 agent.die();
+                count++;
             }
         }
+        return count;
     }
 
     /**
@@ -158,15 +162,14 @@ public class Simulation {
                 progress.setStep(i);
                 step();
             }
-            if (gen % 10 == 9) {
-                System.out.printf("Generation done: %d/%d%n", gen + 1, generations);
-            }
 
             visualizer.addSelection(config, 5);
-            killAgents();
-            visualizer.addAlive(agents, 2.5f);
+            int deadCount = killAgents();
+            getReport().newGeneration(gen, config.getPopulationSize() - deadCount);
 
-            if (true) break;
+            visualizer.addAlive(agents, 2.5f);
+            visualizer.clear();
+
             if (gen == generations - 1) continue;
 
             state = SimulationState.NewGeneration;
@@ -177,7 +180,6 @@ public class Simulation {
             grid.setAgents(agents);
         }
 
-        state = SimulationState.Report;
         visualizer.saveRecording("snapshots/anim.svg");
 
         state = SimulationState.Inactive;
@@ -233,6 +235,10 @@ public class Simulation {
 
     protected void setGrid(Grid grid) {
         this.grid = grid;
+    }
+
+    public Report getReport() {
+        return report;
     }
 
     /**
@@ -342,11 +348,7 @@ public class Simulation {
         /**
          * State when a new generation is created
          */
-        NewGeneration,
-        /**
-         * State when {@link #start} finishes and a report is created
-         */
-        Report
+        NewGeneration
     }
 
     protected SimulationState getState() {

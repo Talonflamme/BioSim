@@ -1,10 +1,12 @@
 package simulation;
 
+import simulation.reports.Report;
+
 public class FakeSimulation extends Simulation {
     private SimulationState state;
 
     public FakeSimulation(FakeSimulationConfig config) {
-        super(config);
+        super(config, new Report(config, new EmptyStream()));
     }
 
     public void setProgress(SimulationProgress progress) {

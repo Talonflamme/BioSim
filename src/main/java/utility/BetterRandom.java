@@ -22,7 +22,7 @@ public class BetterRandom extends Random {
      * @return the randomly selected element.
      */
     public <T> T choice(List<T> list) {
-        return list.get(nextInt(list.size()));
+        return list.get(chooseIndex(list));
     }
 
     /**
@@ -32,7 +32,15 @@ public class BetterRandom extends Random {
      * @return the randomly selected element.
      */
     public <T> T choice(T[] array) {
-        return array[nextInt(array.length)];
+        return array[chooseIndex(array)];
+    }
+
+    public int chooseIndex(Object[] arr) {
+        return nextInt(arr.length);
+    }
+
+    public int chooseIndex(List<?> list) {
+        return list.size();
     }
 
     public void shuffle(Object[] array) {

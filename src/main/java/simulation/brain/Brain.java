@@ -1,22 +1,23 @@
 package simulation.brain;
 
 import org.jetbrains.annotations.NotNull;
-
-import static simulation.Simulation.config;
-
 import simulation.Agent;
 import simulation.Direction;
 import simulation.Simulation;
+import simulation.action.ActionType;
 import simulation.config.SimulationConfig;
-import simulation.action.*;
-import simulation.input.*;
+import simulation.input.Sensors;
 import utility.Utility;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
+import static simulation.Simulation.activeSimulation;
+import static simulation.Simulation.config;
 import static utility.Utility.Rand;
+import static utility.Utility.yellow;
 
 public class Brain {
     /**
@@ -174,7 +175,11 @@ public class Brain {
      */
     public Brain generateChild() {
         int[] childGenome = mutate1(genome);
-        return new Brain(childGenome);
+        Brain result = new Brain(childGenome);
+        if (!Arrays.equals(childGenome, genome)) {
+            activeSimulation.getReport().mutation(genomeToString(), result.genomeToString());
+        }
+        return result;
     }
 
     /**

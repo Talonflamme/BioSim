@@ -6,6 +6,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import simulation.Agent;
 
+import java.io.File;
+import java.io.IOException;
+
+import static utility.Utility.*;
+
 public class SimulationConfig {
     /**
      * The steps to take after which all agents die.
@@ -116,6 +121,10 @@ public class SimulationConfig {
         if (this.mutationRate < 0 || this.mutationRate > 1) {
             throw new ConfigError("mutationRate should be between 0 and 1");
         }
+    }
+
+    public static SimulationConfig fromFile(File file) throws IOException {
+        return ObjectMapper.readValue(file, SimulationConfig.class);
     }
 
     @Override

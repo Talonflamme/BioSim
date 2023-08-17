@@ -13,7 +13,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static visualization.BoardAnimation.format;
+import static utility.Utility.*;
 
 class AliveKeyframe implements AnimationKeyframe {
     public static final Color ALIVE_COLOR = Color.GREEN;
@@ -46,8 +46,8 @@ class AliveKeyframe implements AnimationKeyframe {
     public void writeAnimations(TextStringBuilder animations, float totalDuration, float secondsOffset) {
         float per = secondsOffset / totalDuration * 100;
         animations.append("@keyframes kf").append(idOffset).append("{")
-                .append(format((secondsOffset - transitionDuration) / totalDuration * 100, 2)).append("%{opacity:1}")
-                .append(format(per, 2)).append("%{opacity:0}")
+                .append(format((secondsOffset - transitionDuration) / totalDuration * 100)).append("%{opacity:1}")
+                .append(format(per)).append("%{opacity:0}")
                 .appendln("}");
     }
 

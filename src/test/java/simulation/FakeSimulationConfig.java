@@ -14,7 +14,7 @@ public class FakeSimulationConfig extends SimulationConfig {
     private Float mutationRate;
 
     public FakeSimulationConfig() throws ConfigError {
-        super(1, 1, 1, 1, 1, 1, 0, new ObjectNode[0]);
+        super(1, 1, 1, 1, 1, 1, 0, new ObjectNode[0], false);
     }
 
     @Override

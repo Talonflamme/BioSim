@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 import static visualization.BoardAnimation.convertDurationToSeconds;
-import static visualization.BoardAnimation.format;
+import static utility.Utility.*;
 
 class MovementKeyframe implements AnimationKeyframe {
     final Hashtable<Agent, ArrayList<Movement>> keyframes;
@@ -99,7 +99,7 @@ class MovementKeyframe implements AnimationKeyframe {
     }
 
     private static void addToKeyframes(TextStringBuilder sb, float durPercentage, int x, int y) {
-        sb.append(format(durPercentage * 100, 2)).append("%{")
+        sb.append(format(durPercentage * 100)).append("%{")
                 .append("cx:").append(x).append(";")
                 .append("cy:").append(y)
                 .appendln('}');
