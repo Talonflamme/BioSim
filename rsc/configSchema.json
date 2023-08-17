@@ -5,6 +5,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "numGenerations": {
+      "$ref": "#/definitions/positiveInteger"
+    },
     "stepsPerGen": {
       "$ref": "#/definitions/positiveInteger"
     },
@@ -123,6 +126,7 @@
   },
   "required": [
     "genes",
+    "numGenerations",
     "boardHeight",
     "boardWidth",
     "maxInnerNeurons",

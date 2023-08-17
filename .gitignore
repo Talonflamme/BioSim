@@ -3,6 +3,7 @@ target/
 snapshots/
 rsc/big/
 rsc/small/
+rsc/gens/
 rsc/config.json
 rsc/logs.log
 pom.xml.tag

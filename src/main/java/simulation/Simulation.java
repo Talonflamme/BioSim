@@ -9,12 +9,11 @@ import visualization.Board;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import static utility.Utility.*;
+import static utility.Utility.Rand;
 
 public class Simulation {
     public static Simulation activeSimulation;
@@ -138,13 +137,28 @@ public class Simulation {
         return count;
     }
 
+    private void clearAnimations() {
+        // clear old animations
+        File dir = new File("rsc/gens");
+        if (!dir.exists()) {
+            assert dir.mkdir();
+            return;
+        }
+        File[] files = dir.listFiles();
+        assert files != null;
+        for (File f : files) {
+            assert f.delete();
+        }
+    }
+
     /**
      * Start the simulation.
-     *
-     * @param generations The amount of generations to generate.
      */
-    public void start(int generations) throws IOException {
+    public void start() throws IOException {
+        clearAnimations();
         assert getState() == SimulationState.Inactive;
+        int generations = config.getNumGenerations();
+
         state = SimulationState.Init;
         progress = new SimulationProgress();
         grid.clear();
@@ -154,7 +168,6 @@ public class Simulation {
 
         int steps = config.getStepsPerGen();
 
-        snapshot("snapshots/img.png");
         visualizer.startRecording();
 
         for (int gen = 0; gen < generations; gen++) {
@@ -168,7 +181,7 @@ public class Simulation {
             getReport().newGeneration(gen, config.getPopulationSize() - deadCount);
 
             visualizer.addAlive(agents, 2.5f);
-            visualizer.clear();
+            visualizer.saveRecordingThreaded("rsc/gens/gen" + gen + ".svg");
 
             if (gen == generations - 1) continue;
 
@@ -180,7 +193,7 @@ public class Simulation {
             grid.setAgents(agents);
         }
 
-        visualizer.saveRecording("snapshots/anim.svg");
+        visualizer.saveRecording("snapshots/generation.svg");
 
         state = SimulationState.Inactive;
     }
@@ -201,6 +214,7 @@ public class Simulation {
      *
      * @param path The path as a string. Will be wrapping using {@link File#File(String) new File(path)}
      */
+    @SuppressWarnings("unused")
     public void snapshot(String path) throws IOException {
         snapshot(new File(path));
     }
@@ -208,6 +222,7 @@ public class Simulation {
     /**
      * Creates an image of the current state and saves it uniquely 'snapshots/img.png'. Does not throw an exception.
      */
+    @SuppressWarnings("unused")
     public void snapshot() {
         String filename = "snapshots/img_%d.png".formatted(System.currentTimeMillis());
         try {

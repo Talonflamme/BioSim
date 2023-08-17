@@ -10,7 +10,7 @@ public class Board {
     static final int PADDING_X = 220;
     static final int PADDING_Y = 220;
     static final int SCALE = 20;
-//    static final Color BACKGROUND_COLOR = Color.WHITE;
+    //    static final Color BACKGROUND_COLOR = Color.WHITE;
     static final Color BACKGROUND_COLOR = new Color(0x1E1F22);
     static final Color RECT_OUTLINE_COLOR = new Color(0xadd8e6); // light blue
 
@@ -69,7 +69,8 @@ public class Board {
 
     /**
      * Adds the animation for visualizing how selections kill agents/don't kill agents.
-     * @param config the Config from which to take the {@link SimulationConfig#getSelection selections}.
+     *
+     * @param config  the Config from which to take the {@link SimulationConfig#getSelection selections}.
      * @param seconds the amount of seconds this animation should last.
      */
     public void addSelection(SimulationConfig config, int seconds) {
@@ -78,6 +79,7 @@ public class Board {
 
     /**
      * Creates a snapshot. Only processes the alive state of agents. Not the position.
+     *
      * @param fadeAwayTransition the transition in seconds of the agents fading away.
      */
     public void addAlive(Agent[] agents, float fadeAwayTransition) {
@@ -101,5 +103,18 @@ public class Board {
 
     public void clear() {
         animation.clear();
+    }
+
+    /**
+     * Calls {@link #saveRecording} and {@link #clear} in a new Thread.
+     */
+    public void saveRecordingThreaded(final String path) {
+        final BoardAnimation anim = animation;
+        startRecording(); // create new animation: this way, there are no conflicts
+        Thread thread = new Thread(() -> {
+            anim.save(path);
+            anim.clear();
+        });
+        thread.start();
     }
 }

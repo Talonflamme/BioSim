@@ -15,7 +15,7 @@ public class Main {
 
         try (Report report = Report.create(config, "rsc/logs.log")) {
             Simulation simulation = new Simulation(configFile, report);
-            simulation.start(1000);
+            simulation.start();
         }
     }
 }

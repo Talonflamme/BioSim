@@ -37,9 +37,17 @@ public class SimulationConfig {
      */
     private final int maxInnerNeurons;
     private final Selection[] selection;
+    /**
+     * The amount of generations this simulation lasts.
+     */
+    private final int numGenerations;
 
     public int getStepsPerGen() {
         return stepsPerGen;
+    }
+
+    public int getNumGenerations() {
+        return numGenerations;
     }
 
     public int getPopulationSize() {
@@ -82,6 +90,7 @@ public class SimulationConfig {
 
     @JsonCreator
     public SimulationConfig(@JsonProperty(value = "stepsPerGen", required = true) int stepsPerGen,
+                            @JsonProperty(value = "numGenerations", required = true) int numGenerations,
                             @JsonProperty(value = "populationSize", required = true) int populationSize,
                             @JsonProperty(value = "boardWidth", required = true) int boardWidth,
                             @JsonProperty(value = "boardHeight", required = true) int boardHeight,
@@ -98,10 +107,14 @@ public class SimulationConfig {
         this.maxInnerNeurons = maxInnerNeurons;
         this.mutationRate = mutationRate;
         this.selection = Selection.parse(selection, this);
+        this.numGenerations = numGenerations;
         this.uniqueColors = uniqueColors;
 
         if (this.stepsPerGen < 1) {
             throw new ConfigError("stepsPerGen should be greater than 1");
+        }
+        if (this.numGenerations < 1) {
+            throw new ConfigError("numGenerations should be greater than 0");
         }
         if (this.boardWidth < 1) {
             throw new ConfigError("boardWidth should be greater than 1");
@@ -131,6 +144,7 @@ public class SimulationConfig {
     public String toString() {
         return "SimulationConfig[" +
                "stepsPerGen=" + stepsPerGen +
+               ", numGenerations=" + numGenerations +
                ", populationSize=" + populationSize +
                ", boardWidth=" + boardWidth +
                ", boardHeight=" + boardHeight +

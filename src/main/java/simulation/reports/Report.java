@@ -58,7 +58,8 @@ public class Report implements AutoCloseable {
      */
     public void newGeneration(int genNum, int aliveCount) {
         int popSize = config.getPopulationSize();
-        String str = "Generation: %d/%d. [%s] [%s]".formatted(genNum, popSize,
+        int numGens = config.getNumGenerations();
+        String str = "Generation: %d/%d. [%s] [%s]".formatted(genNum, numGens,
                 green(format(aliveCount * 100f / popSize) + "%"),
                 red(format(100f - aliveCount * 100f / popSize) + "%"));
         file.println(str);
