@@ -171,7 +171,7 @@ public class DeathZone extends Selection {
         @Override
         void draw(Graphics2D g, float animationProgress) {
             g.setStroke(new BasicStroke(2));
-            float transparency = Math.abs(animationProgress - 0.5f) * 2f;
+            float transparency = 1f - Math.abs(animationProgress - 0.5f) * 2f;
             g.setColor(changeAlpha(DEATH_ZONE_COLOR, transparency));
             g.drawRect(x + 1, y + 1, width - 2, height - 2);
         }

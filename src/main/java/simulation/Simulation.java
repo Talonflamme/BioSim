@@ -238,9 +238,9 @@ public class Simulation {
                 int gen = progress.getGeneration();
                 int aliveCount = killAgents();
                 getReport().newGeneration(gen, aliveCount);
-                state = SimulationState.AfterAnimation;
+                state = SimulationState.AfterSelection;
             }
-            case AfterAnimation -> state = SimulationState.NewGeneration;
+            case AfterSelection -> state = SimulationState.NewGeneration;
             case NewGeneration -> {
                 int gen = progress.getGeneration();
                 progress.setGeneration(gen + 1);
@@ -430,7 +430,7 @@ public class Simulation {
          */
         Selection,
         AfterStep,
-        AfterAnimation,
+        AfterSelection,
         /**
          * State when a new generation is created
          */

@@ -2,17 +2,16 @@ package visualization.live;
 
 import simulation.Agent;
 import simulation.Simulation;
-import simulation.config.Selection;
 
 import javax.swing.*;
-
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 
 import static utility.Utility.*;
-import static visualization.Board.*;
+import static visualization.Board.BACKGROUND_COLOR;
+import static visualization.Board.RECT_OUTLINE_COLOR;
 
 public class LiveSimulationWindow {
     private final JFrame frame;
@@ -42,7 +41,8 @@ public class LiveSimulationWindow {
     /**
      * How many milliseconds it should take to display the selection process.
      */
-    private static final long MS_SELECTION = 15_000;
+    private static final long MS_SELECTION = 7_000;
+    private static final double ANIMATION_REFRESH_RATE = 1000.0 / 60.0;
 
     public void start() {
         do {
@@ -66,7 +66,7 @@ public class LiveSimulationWindow {
             case NewGeneration -> {
                 System.out.println("New Generation!");
             }
-            case Selection -> animateSelection(MS_SELECTION - elapsedMs);
+            case AfterSelection -> animateSelection(MS_SELECTION - elapsedMs);
         }
     }
 
@@ -80,8 +80,6 @@ public class LiveSimulationWindow {
             e.printStackTrace();
         }
     }
-
-    private static final double ANIMATION_REFRESH_RATE = 1000.0 / 60.0;
 
     @FunctionalInterface
     private interface AnimationConsumer {
@@ -105,14 +103,15 @@ public class LiveSimulationWindow {
      */
     private static void animate(long durationMs, AnimationConsumer animationFunc) {
         double time = 0.0; // elapsed time since method start
-        long start = System.currentTimeMillis();
         while (time < durationMs) {
-            time = System.currentTimeMillis() - start;
+            long start = System.currentTimeMillis();
             float progress = (float) Math.min(time / durationMs, 1);
             animationFunc.accept(progress);
 
             double timeLeft = Math.max(0, durationMs - time);
             sleep(Math.min(ANIMATION_REFRESH_RATE, timeLeft));
+
+            time += ANIMATION_REFRESH_RATE - start + System.currentTimeMillis();
         }
     }
 
@@ -255,12 +254,19 @@ public class LiveSimulationWindow {
             g.draw(new Line2D.Float(0, 0.5f, w, 0.5f)); // horizontal top
         }
 
-        void drawAgents(Graphics2D g, float animationProgress) {
+        void drawAgents(Graphics2D g, float animationProgress, float deadAgentOpacity) {
             Agent[] agents = simulation.getAgents();
             if (agents == null) return;
 
             for (Agent agent : agents) {
-                if (!agent.isAlive()) return;
+                float alpha = agent.isAlive() ? 1 : deadAgentOpacity;
+                if (alpha == 0) continue;
+                if (alpha == 1) {
+                    g.setColor(agent.getBrain().getColor());
+                } else {
+                    g.setColor(changeAlpha(agent.getBrain().getColor(), alpha));
+                }
+
                 int lastX = agent.getLastX();
                 int lastY = agent.getLastY();
                 int currentX = agent.getX();
@@ -268,9 +274,23 @@ public class LiveSimulationWindow {
                 float x = lastX + animationProgress * (currentX - lastX);
                 float y = lastY + animationProgress * (currentY - lastY);
 
-                g.setColor(agent.getBrain().getColor());
                 g.fill(new Ellipse2D.Float(x * factor, y * factor, factor, factor));
             }
+        }
+
+        /**
+         * Called from {@link SelectionPanel#draw}
+         *
+         * @param deadAgentOpacity the alpha value from 0-1 of dead agents
+         */
+        void draw(Graphics2D g, float animationProgress, float deadAgentOpacity) {
+            g.setColor(getBackground());
+            g.fillRect(0, 0, getWidth(), getHeight());
+
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            drawGrid(g);
+            drawAgents(g, animationProgress, deadAgentOpacity);
         }
 
         @Override
@@ -278,7 +298,7 @@ public class LiveSimulationWindow {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             drawGrid(g);
-            drawAgents(g, animationProgress);
+            drawAgents(g, animationProgress, 0);
         }
     }
 
@@ -290,7 +310,14 @@ public class LiveSimulationWindow {
 
         @Override
         void draw(Graphics2D g, float animationProgress) {
-            // todo
+            draw.agents.draw(g, animationProgress, animationProgress < 0.5f ? 1 : 2 * (1f - animationProgress));
+            AffineTransform tx = g.getTransform();
+            tx.scale(factor, factor);
+            g.setTransform(tx);
+
+            for (var selection : simulation.getConfig().getSelection()) {
+                selection.draw(g, animationProgress);
+            }
         }
     }
 }
