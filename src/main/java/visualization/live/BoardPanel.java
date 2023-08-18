@@ -23,14 +23,14 @@ abstract class BoardPanel extends JPanel {
         this.simulation = simulation;
     }
 
-    void center(int parentWidth, int parentHeight) {
+    void calcBounds(int xOff, int yOff, int parentWidth, int parentHeight) {
         int boardWidth = simulation.getConfig().getBoardWidth();
         int boardHeight = simulation.getConfig().getBoardHeight();
         factor = Math.min((float) MAX_WIDTH / boardWidth, (float) MAX_HEIGHT / boardHeight);
         float w = boardWidth * factor;
         float h = boardHeight * factor;
-        setBounds((int) Math.floor((parentWidth - w) / 2f),
-                (int) Math.floor((parentHeight - h) / 2f),
+        setBounds(xOff + (int) Math.floor((parentWidth - w) / 2f),
+                yOff + (int) Math.floor((parentHeight - h) / 2f),
                 (int) Math.ceil(w),
                 (int) Math.ceil(h));
     }

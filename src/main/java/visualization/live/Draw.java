@@ -18,11 +18,12 @@ class Draw extends JPanel {
 
         agents = new AgentsPanel(simulation);
         add(agents);
-        agents.center(1180, 770);
+        agents.calcBounds(-130, 0, 1180, 770);
+        System.out.println(agents.getLocation());
 
         selection = new SelectionPanel(simulation, this);
         add(selection);
-        selection.center(1180, 770);
+        selection.calcBounds(-130, 0, 1180, 770);
     }
 
     @Override
