@@ -5,6 +5,7 @@ import simulation.brain.Brain;
 import simulation.config.SimulationConfig;
 import simulation.reports.Report;
 import visualization.Board;
+import visualization.live.LiveSimulationWindow;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -124,13 +125,15 @@ public class Simulation {
     /**
      * Kill all agents where {@link #config config}.{@link SimulationConfig#survives} returns {@code false}.
      *
-     * @return the amount of agents that died.
+     * @return the amount of agents that survived.
      */
     private int killAgents() {
+        assert state == SimulationState.Selection;
         int count = 0;
         for (Agent agent : agents) {
             if (!config.survives(agent)) {
                 agent.die();
+            } else {
                 count++;
             }
         }
@@ -154,7 +157,7 @@ public class Simulation {
     /**
      * Start the simulation.
      */
-    public void start() throws IOException {
+    public void start() {
         clearAnimations();
         assert getState() == SimulationState.Inactive;
         int generations = config.getNumGenerations();
@@ -172,13 +175,15 @@ public class Simulation {
 
         for (int gen = 0; gen < generations; gen++) {
             for (int i = 0; i < steps; i++) {
+                state = SimulationState.BeforeStep;
                 progress.setStep(i);
                 step();
             }
 
+            state = SimulationState.Selection;
             visualizer.addSelection(config, 5);
-            int deadCount = killAgents();
-            getReport().newGeneration(gen, config.getPopulationSize() - deadCount);
+            int aliveCount = killAgents();
+            getReport().newGeneration(gen, aliveCount);
 
             visualizer.addAlive(agents, 2.5f);
             visualizer.saveRecordingThreaded("rsc/gens/gen" + gen + ".svg");
@@ -196,6 +201,56 @@ public class Simulation {
         visualizer.saveRecording("snapshots/generation.svg");
 
         state = SimulationState.Inactive;
+    }
+
+    /**
+     * Called by {@link LiveSimulationWindow live window}
+     */
+    public void liveStep() {
+        switch (state) {
+            case Inactive -> {
+                state = SimulationState.Init;
+                progress = new SimulationProgress();
+                grid.clear();
+                agents = generateAgents();
+                grid.setAgents(agents);
+                state = SimulationState.BeforeStep;
+            }
+            case BeforeStep -> {
+                step();
+                state = SimulationState.AfterStep;
+            }
+            case AfterStep -> {
+                int step = progress.getStep();
+                int gen = progress.getGeneration();
+                if (step + 1 >= config.getStepsPerGen()) {
+                    if (gen + 1 >= config.getNumGenerations()) {
+                        state = SimulationState.Inactive;
+                    } else {
+                        state = SimulationState.Selection;
+                    }
+                } else {
+                    state = SimulationState.BeforeStep;
+                    progress.setStep(step + 1);
+                }
+            }
+            case Selection -> {
+                int gen = progress.getGeneration();
+                int aliveCount = killAgents();
+                getReport().newGeneration(gen, aliveCount);
+                state = SimulationState.AfterSelection;
+            }
+            case AfterSelection -> state = SimulationState.NewGeneration;
+            case NewGeneration -> {
+                int gen = progress.getGeneration();
+                progress.setGeneration(gen + 1);
+                progress.setStep(0);
+                agents = generateAgents(agents);
+                grid.clear();
+                grid.setAgents(agents);
+                state = SimulationState.BeforeStep;
+            }
+        }
     }
 
     /**
@@ -242,6 +297,10 @@ public class Simulation {
 
     public SimulationProgress getProgress() {
         return progress;
+    }
+
+    public Agent[] getAgents() {
+        return agents;
     }
 
     public Grid getGrid() {
@@ -292,7 +351,7 @@ public class Simulation {
     }
 
     private void step() {
-
+        assert state == SimulationState.BeforeStep;
         state = SimulationState.OnAgentThink;
         for (Agent agent : agents) {
             agent.step();
@@ -303,8 +362,10 @@ public class Simulation {
         for (Agent agent : agents) {
             agent.afterStep(agent.getX(), agent.getY(), progress);
         }
-        // create image
-        visualizer.addMovement(agents);
+
+        if (visualizer.isRecording()) {
+            visualizer.addMovement(agents);
+        }
     }
 
     /**
@@ -343,7 +404,7 @@ public class Simulation {
         }
     }
 
-    protected enum SimulationState {
+    public enum SimulationState {
         /**
          * The simulation is inactive.
          */
@@ -361,12 +422,22 @@ public class Simulation {
          */
         MoveUpdate,
         /**
+         * State right before calling {@link #step Simulation.step()}.
+         */
+        BeforeStep,
+        /**
+         * State when agents are killed and selected. Mainly {@link #killAgents() Simulation.killAgents()} is called.
+         */
+        Selection,
+        AfterStep,
+        AfterSelection,
+        /**
          * State when a new generation is created
          */
         NewGeneration
     }
 
-    protected SimulationState getState() {
+    public SimulationState getState() {
         return state;
     }
 }

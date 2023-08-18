@@ -5,6 +5,11 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "type": {
+      "enum": [
+        "Live", "Compute"
+      ]
+    },
     "numGenerations": {
       "$ref": "#/definitions/positiveInteger"
     },
@@ -127,6 +132,7 @@
   "required": [
     "genes",
     "numGenerations",
+    "type",
     "boardHeight",
     "boardWidth",
     "maxInnerNeurons",

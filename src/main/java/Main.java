@@ -1,11 +1,10 @@
 import simulation.Simulation;
 import simulation.config.SimulationConfig;
 import simulation.reports.Report;
+import visualization.live.LiveSimulationWindow;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
 
 public class Main {
 
@@ -15,7 +14,15 @@ public class Main {
 
         try (Report report = Report.create(config, "rsc/logs.log")) {
             Simulation simulation = new Simulation(configFile, report);
-            simulation.start();
+            if (config.getType() == SimulationConfig.Type.Live) {
+                LiveSimulationWindow window = new LiveSimulationWindow(simulation);
+                window.show();
+                window.start();
+            } else {
+                report.enable(Report.Feature.AllGenerations);
+                report.enable(Report.Feature.Compressed);
+                simulation.start();
+            }
         }
     }
 }

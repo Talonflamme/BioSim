@@ -9,10 +9,20 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("unused")
 public class Utility {
     private static final String reset = "\u001B[0m";
     public static final ObjectMapper ObjectMapper = new ObjectMapper();
     public static final BetterRandom Rand = new BetterRandom(42);
+    public static final Color TRANSPARENT = new Color(0, 0, 0, 0);
+
+    public static Color changeAlpha(Color c, int a) {
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+    }
+
+    public static Color changeAlpha(Color c, float a) {
+        return new Color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, a);
+    }
 
     public static String red(String str) {
         return "\u001B[31m" + str + reset;

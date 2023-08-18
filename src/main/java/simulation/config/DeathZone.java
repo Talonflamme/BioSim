@@ -6,10 +6,12 @@ import org.apache.commons.text.TextStringBuilder;
 import org.jetbrains.annotations.Nullable;
 import simulation.Agent;
 
+import java.awt.*;
+
 import static utility.Utility.*;
 
 public class DeathZone extends Selection {
-    public static final String DEATH_ZONE_COLOR = "#8655ff";
+    public static final Color DEATH_ZONE_COLOR = new Color(0x8655ff);
 
     private final Region[] regions;
 
@@ -66,6 +68,13 @@ public class DeathZone extends Selection {
         }
     }
 
+    @Override
+    public void draw(Graphics2D g, float animationProgress) {
+        for (Region region : regions) {
+            region.draw(g, animationProgress);
+        }
+    }
+
     private static abstract class Region {
         static Region parse(JsonNode node, SimulationConfig config) throws ConfigError {
             if (!node.isObject()) {
@@ -103,6 +112,16 @@ public class DeathZone extends Selection {
          * @param id       the first id.
          */
         public abstract void writeToElements(TextStringBuilder elements, int id);
+
+        /**
+         * Draw this selection process. Only called when simulation is controlled through
+         * {@link visualization.live.LiveSimulationWindow LiveSimulationWindow}
+         *
+         * @param g                 the Graphics2D object to draw with. Is a clone and is automatically disposed.
+         * @param animationProgress the animation progress. Value between 0 and 1 representing
+         *                          how far the animation was already animated. E.g.: {@code 52%} -> {@code 0.52f}
+         */
+        abstract void draw(Graphics2D g, float animationProgress);
     }
 
     private static final class RectRegion extends Region {
@@ -146,7 +165,15 @@ public class DeathZone extends Selection {
             // language=XML
             elements.appendln("""
                     <path d="M%d %dh%dv%dH%1$dV%2$d" stroke="%s" stroke-width="2" style="animation-name:kf%d" />
-                    """.formatted(x + 1, y + 1, width - 2, height - 2, DEATH_ZONE_COLOR, id));
+                    """.formatted(x + 1, y + 1, width - 2, height - 2, format(DEATH_ZONE_COLOR), id));
+        }
+
+        @Override
+        void draw(Graphics2D g, float animationProgress) {
+            g.setStroke(new BasicStroke(2));
+            float transparency = 1f - Math.abs(animationProgress - 0.5f) * 2f;
+            g.setColor(changeAlpha(DEATH_ZONE_COLOR, transparency));
+            g.drawRect(x + 1, y + 1, width - 2, height - 2);
         }
     }
 }
