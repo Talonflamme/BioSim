@@ -1,5 +1,7 @@
 package simulation.reports;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import simulation.Agent;
 import simulation.config.SimulationConfig;
 
@@ -64,7 +66,7 @@ public class Report implements AutoCloseable {
     public void newGeneration(int genNum, int aliveCount, Agent[] agents) {
         int popSize = config.getPopulationSize();
         int numGens = config.getNumGenerations();
-        Map.Entry<String, Integer> mostCommonGene = mostCommonGene(agents);
+        Pair<String, Integer> mostCommonGene = mostCommonGene(agents);
         String str = "Generation: %d/%d. [%s] [%s] [%s] [%s]".formatted(genNum, numGens,
                 green(format(aliveCount * 100f / popSize) + "%"),
                 red(format(100f - aliveCount * 100f / popSize) + "%"),
@@ -76,7 +78,7 @@ public class Report implements AutoCloseable {
         }
     }
 
-    private static Map.Entry<String, Integer> mostCommonGene(Agent[] agents) {
+    private static Pair<String, Integer> mostCommonGene(Agent[] agents) {
         Map<String, Integer> counts = new HashMap<>();
 
         for (Agent a : agents) {
@@ -94,7 +96,11 @@ public class Report implements AutoCloseable {
             }
         }
 
-        return Objects.requireNonNull(most);
+        if (most == null) {
+            return new ImmutablePair<>(null, 0);
+        } else {
+            return new ImmutablePair<>(most.getKey(), most.getValue());
+        }
     }
 
     public void compressed(int beforeLength, int afterLength) {

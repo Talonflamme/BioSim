@@ -50,7 +50,7 @@ public class BoardAnimation {
 
     void addFrame(Selection[] selections, float seconds) {
         int id = getUsedIDs();
-        keyframes.add(new SelectionKeyframe(selections, seconds, id));
+        keyframes.add(new SelectionKeyframe(selections, seconds, id, Simulation.activeSimulation.getProgress().getGeneration()));
     }
 
     static float convertDurationToSeconds(float x) {

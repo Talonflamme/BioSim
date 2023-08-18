@@ -7,6 +7,7 @@ import org.apache.commons.text.TextStringBuilder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import simulation.Agent;
+import simulation.Simulation;
 
 import java.awt.*;
 import java.util.function.Predicate;
@@ -89,7 +90,7 @@ public abstract class Selection {
 
     public static Selection parse(ObjectNode obj, SimulationConfig config) throws ConfigError {
         int begin = getInt(obj, "begin", 0);
-        int end = getInt(obj, "end", begin + 1, -1);
+        int end = getInt(obj, "end", begin, -1);
         ObjectNode args = getObj(obj, "args", true);
         return switch (getType(obj)) {
             case DeathZone -> new DeathZone(begin, end, args, config);
@@ -110,6 +111,14 @@ public abstract class Selection {
         return result;
     }
 
+    public boolean isActive(int gen) {
+        return gen >= begin && (end == -1 || gen < end);
+    }
+
+    public boolean isActive() {
+        return isActive(Simulation.activeSimulation.getProgress().getGeneration());
+    }
+
     public abstract SelectionType getType();
 
     /**
@@ -119,31 +128,38 @@ public abstract class Selection {
 
     /**
      * Write to the keyframes.
-     * @param sb The TextBuilder which is used in the animations section.
-     * @param timeStart the percentage at which to start the animation ({@code 62% = 0.68f}).
-     * @param timeEnd the percentage at which to stop the animation ({@code 98% = 0.98}).
-     * @param id the id used for the {@code @keyframes} identifier.
+     *
+     * @param sb         The TextBuilder which is used in the animations section.
+     * @param timeStart  the percentage at which to start the animation ({@code 62% = 0.68f}).
+     * @param timeEnd    the percentage at which to stop the animation ({@code 98% = 0.98}).
+     * @param id         the id used for the {@code @keyframes} identifier.
+     * @param generation for which generation this animation is.
      */
-    public abstract void writeAnimation(TextStringBuilder sb, float timeStart, float timeEnd, int id);
+    public abstract void writeAnimation(TextStringBuilder sb, float timeStart, float timeEnd, int id, int generation);
 
     /**
      * The amount of IDs this selection uses for the animation.
+     *
+     * @param generation for which generation this animation is.
      */
-    public abstract int numAnimationIDs();
+    public abstract int numAnimationIDs(int generation);
 
     /**
      * Write to the elements.
-     * @param elements The TextBuilder which is used in the elements section.
-     * @param id the id used for the @keyframes identifier.
+     *
+     * @param elements   The TextBuilder which is used in the elements section.
+     * @param id         the id used for the @keyframes identifier.
+     * @param generation for which generation this animation is.
      */
-    public abstract void writeElements(TextStringBuilder elements, int id);
+    public abstract void writeElements(TextStringBuilder elements, int id, int generation);
 
     /**
      * Draw this selection process. Only called when simulation is controlled through
      * {@link visualization.live.LiveSimulationWindow LiveSimulationWindow}
-     * @param g the Graphics2D object to draw with. Is a clone and is automatically disposed.
+     *
+     * @param g                 the Graphics2D object to draw with. Is a clone and is automatically disposed.
      * @param animationProgress the animation progress. Value between 0 and 1 representing
-     *                         how far the animation was already animated. E.g.: {@code 52%} -> {@code 0.52f}
+     *                          how far the animation was already animated. E.g.: {@code 52%} -> {@code 0.52f}
      */
     public abstract void draw(Graphics2D g, float animationProgress);
 }

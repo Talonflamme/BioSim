@@ -5,15 +5,23 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.text.TextStringBuilder;
 import org.jetbrains.annotations.Nullable;
 import simulation.Agent;
+import simulation.Simulation;
 
 import java.awt.*;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
 
-import static utility.Utility.*;
+import static utility.Utility.changeAlpha;
+import static utility.Utility.format;
 
 public class DeathZone extends Selection {
     public static final Color DEATH_ZONE_COLOR = new Color(0x8655ff);
 
     private final Region[] regions;
+    /**
+     * Whether to reverse this condition.
+     */
+    private final boolean reverse;
 
     protected DeathZone(int begin, int end, @Nullable ObjectNode args, SimulationConfig config) throws ConfigError {
         super(begin, end);
@@ -21,11 +29,22 @@ public class DeathZone extends Selection {
             throw new ConfigError("Death Zone needs arguments");
         }
 
+        JsonNode reverse = args.get("reverse");
+        if (reverse == null) {
+            this.reverse = false;
+        } else {
+            if (!reverse.isBoolean()) {
+                throw new ConfigError("Reverse must be omitted or a boolean");
+            }
+            this.reverse = reverse.asBoolean();
+        }
+
         JsonNode node = assertType(args, "regions", JsonNode::isArray);
         regions = new Region[node.size()];
         for (int i = 0; i < regions.length; i++) {
-            regions[i] = Region.parse(node.get(i), config);
+            regions[i] = Region.parse(node.get(i), config, this.reverse);
         }
+
     }
 
     @Override
@@ -35,16 +54,18 @@ public class DeathZone extends Selection {
 
     @Override
     public boolean survives(Agent agent) {
+        if (!isActive()) return true;
         for (Region region : regions) {
             if (region.contains(agent.getX(), agent.getY())) {
-                return false;
+                return reverse;
             }
         }
-        return true;
+        return !reverse;
     }
 
     @Override
-    public void writeAnimation(TextStringBuilder sb, float timeStart, float timeEnd, int id) {
+    public void writeAnimation(TextStringBuilder sb, float timeStart, float timeEnd, int id, int generation) {
+        if (!isActive(generation)) return;
         for (Region region : regions) {
             region.writeToAnimation(sb, timeStart, timeEnd, id);
             id += region.numAnimationIDs();
@@ -52,7 +73,8 @@ public class DeathZone extends Selection {
     }
 
     @Override
-    public int numAnimationIDs() {
+    public int numAnimationIDs(int generation) {
+        if (!isActive(generation)) return 0;
         int id = 0;
         for (Region region : regions) {
             id += region.numAnimationIDs();
@@ -61,7 +83,9 @@ public class DeathZone extends Selection {
     }
 
     @Override
-    public void writeElements(TextStringBuilder elements, int id) {
+    public void writeElements(TextStringBuilder elements, int id, int generation) {
+        if (!isActive(generation)) return;
+
         for (Region region : regions) {
             region.writeToElements(elements, id);
             id += region.numAnimationIDs();
@@ -70,22 +94,49 @@ public class DeathZone extends Selection {
 
     @Override
     public void draw(Graphics2D g, float animationProgress) {
+        if (!isActive()) return;
         for (Region region : regions) {
             region.draw(g, animationProgress);
         }
     }
 
     private static abstract class Region {
-        static Region parse(JsonNode node, SimulationConfig config) throws ConfigError {
+        /**
+         * This value is the same as {@link DeathZone#reverse}
+         */
+        final boolean reverse;
+
+        protected Region(boolean reverse) {
+            this.reverse = reverse;
+        }
+
+        static Region parse(JsonNode node, SimulationConfig config, boolean reverse) throws ConfigError {
             if (!node.isObject()) {
                 throw new ConfigError("Region args should be an object");
             }
             JsonNode n = assertType((ObjectNode) node, "type", JsonNode::isTextual);
             String type = n.asText();
             return switch (type.toLowerCase()) {
-                case "rect" -> new RectRegion((ObjectNode) node, config);
+                case "rect" -> new RectRegion((ObjectNode) node, config, reverse);
+                case "circle" -> new CircleRegion((ObjectNode) node, config, reverse);
                 default -> throw new ConfigError("Unknown type: " + type);
             };
+        }
+
+        protected void addPath(TextStringBuilder elements, String path, int id) {
+            if (reverse) {
+                int w = Simulation.config().getBoardWidth();
+                int h = Simulation.config().getBoardHeight();
+                // language=XML
+                elements.appendln("""
+                        <path d="M0 0h%dv%dh-%1$d Z %s" fill-rule="evenodd" fill="%s" style="animation-name:kf%d" />
+                        """.formatted(w, h, path, format(DEATH_ZONE_COLOR), id));
+            } else {
+                // language=XML
+                elements.appendln("""
+                        <path d="%s" fill="%s" style="animation-name:kf%d" />
+                        """.formatted(path, format(DEATH_ZONE_COLOR), id));
+            }
         }
 
         abstract boolean contains(int x, int y);
@@ -127,7 +178,8 @@ public class DeathZone extends Selection {
     private static final class RectRegion extends Region {
         private final int x, y, width, height;
 
-        private RectRegion(ObjectNode args, SimulationConfig config) throws ConfigError {
+        private RectRegion(ObjectNode args, SimulationConfig config, boolean reverse) throws ConfigError {
+            super(reverse);
             x = getLength(args, "x", 0, config.getBoardWidth());
             y = getLength(args, "y", 0, config.getBoardHeight());
             width = getLength(args, "width", 1, config.getBoardWidth());
@@ -160,12 +212,13 @@ public class DeathZone extends Selection {
             return 1;
         }
 
+        private String rectPath() {
+            return "M%d %dh%dv%dH%1$dV%2$d".formatted(x, y, width, height);
+        }
+
         @Override
         public void writeToElements(TextStringBuilder elements, int id) {
-            // language=XML
-            elements.appendln("""
-                    <path d="M%d %dh%dv%dH%1$dV%2$d" stroke="%s" stroke-width="2" style="animation-name:kf%d" />
-                    """.formatted(x + 1, y + 1, width - 2, height - 2, format(DEATH_ZONE_COLOR), id));
+            addPath(elements, rectPath(), id);
         }
 
         @Override
@@ -173,7 +226,72 @@ public class DeathZone extends Selection {
             g.setStroke(new BasicStroke(2));
             float transparency = 1f - Math.abs(animationProgress - 0.5f) * 2f;
             g.setColor(changeAlpha(DEATH_ZONE_COLOR, transparency));
-            g.drawRect(x + 1, y + 1, width - 2, height - 2);
+            g.fillRect(x + 1, y + 1, width - 2, height - 2);
+        }
+    }
+
+    private static final class CircleRegion extends Region {
+        private final int cx, cy, r;
+
+        private CircleRegion(ObjectNode args, SimulationConfig config, boolean reverse) throws ConfigError {
+            super(reverse);
+            cx = getLength(args, "cx", 0, config.getBoardWidth());
+            cy = getLength(args, "cy", 0, config.getBoardHeight());
+            r = getInt(args, "r", 1);
+        }
+
+        @Override
+        public String toString() {
+            return "CircleRegion[cx=%d, cy=%d, r=%d]".formatted(cx, cy, r);
+        }
+
+        @Override
+        boolean contains(int x, int y) {
+            int dx = cx - x;
+            int dy = cy - y;
+            return dx * dx + dy * dy <= r * r;
+        }
+
+        @Override
+        void writeToAnimation(TextStringBuilder sb, float start, float end, int id) {
+            sb.append("@keyframes kf")
+                    .append(id).append("{")
+                    .append("0%{opacity:0}")
+                    .append(format(start * 100)).append("%{opacity:0}")
+                    .append(format((end + start) * 50f)).append("%{opacity:1}")
+                    .append(format(end * 100f)).append("%{opacity:0;visibility:hidden}")
+                    .appendln("}");
+        }
+
+        @Override
+        int numAnimationIDs() {
+            return 1;
+        }
+
+        private String circlePath() {
+            return "M%d %d m-%d,0 a%3$d,%3$d 0 1,1 %d,0 a%3$d,%3$d 0 1,1 -%4$d,0".formatted(cx, cy, r, r * 2);
+        }
+
+        @Override
+        public void writeToElements(TextStringBuilder elements, int id) {
+            addPath(elements, circlePath(), id);
+        }
+
+        @Override
+        void draw(Graphics2D g, float animationProgress) {
+            g.setStroke(new BasicStroke(2));
+            float transparency = 1f - Math.abs(animationProgress - 0.5f) * 2f;
+            g.setColor(changeAlpha(DEATH_ZONE_COLOR, transparency));
+            Shape circle = new Ellipse2D.Float(cx - r, cy - r, r * 2, r * 2);
+            if (reverse) {
+                int w = Simulation.config().getBoardWidth();
+                int h = Simulation.config().getBoardHeight();
+                Area area = new Area(new Rectangle(0, 0, w, h));
+                area.subtract(new Area(circle));
+                g.fill(area);
+            } else {
+                g.fill(circle);
+            }
         }
     }
 }

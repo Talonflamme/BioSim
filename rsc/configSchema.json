@@ -7,7 +7,8 @@
   "properties": {
     "type": {
       "enum": [
-        "Live", "Compute"
+        "Live",
+        "Compute"
       ]
     },
     "animationFrequency": {
@@ -51,30 +52,18 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "properties": {
-          "begin": {
-            "$ref": "#/definitions/positiveInteger0"
-          },
-          "end": {
-            "oneOf": [
-              {
-                "$ref": "#/definitions/positiveInteger"
+        "oneOf": [
+          {
+            "properties": {
+              "type": {
+                "const": "DeathZone"
               },
-              {
-                "const": -1
-              }
-            ]
-          },
-          "type": {
-            "enum": [
-              "DeathZone"
-            ]
-          },
-          "args": {
-            "oneOf": [
-              {
+              "args": {
                 "type": "object",
                 "properties": {
+                  "reverse": {
+                    "type": "boolean"
+                  },
                   "regions": {
                     "type": "array",
                     "items": {
@@ -108,6 +97,30 @@
                             "x",
                             "y"
                           ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "circle"
+                            },
+                            "cx": {
+                              "$ref": "#/definitions/length"
+                            },
+                            "cy": {
+                              "$ref": "#/definitions/length"
+                            },
+                            "r": {
+                              "$ref": "#/definitions/positiveInteger"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "type",
+                            "cx",
+                            "cy",
+                            "r"
+                          ]
                         }
                       ]
                     }
@@ -117,10 +130,21 @@
                   "regions"
                 ],
                 "additionalProperties": false
-              },
-              {
-                "type": "null"
               }
+            }
+          }
+        ],
+        "properties": {
+          "begin": {
+            "$ref": "#/definitions/positiveInteger0"
+          },
+          "end": {
+            "type": "integer",
+            "minimum": -1
+          },
+          "type": {
+            "enum": [
+              "DeathZone"
             ]
           }
         },
