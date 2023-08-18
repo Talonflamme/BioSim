@@ -27,22 +27,20 @@ public final class Connection implements Comparable<Connection> {
         }
 
         // check which lead to an output
-        HashMap<InnerNode, Boolean> cache = new HashMap<>(innerNodes.size());
         HashSet<InnerNode> visitedNodes = new HashSet<>(innerNodes.size());
 
         for (InnerNode inner : innerNodes) {
             visitedNodes.clear();
-            if (!hasOutput(inner, connections, visitedNodes, cache)) {
+            if (!hasOutput(inner, connections, visitedNodes)) {
                 removeConnections(connections, inner);
             }
         }
 
         // now that only inner nodes that lead to an output are in innerNodes, we can focus on inputs
         // check which innerNodes do not have an input
-        cache.clear();
         for (InnerNode inner : innerNodes) {
             visitedNodes.clear();
-            if (!hasInput(inner, connections, visitedNodes, cache)) {
+            if (!hasInput(inner, connections, visitedNodes)) {
                 removeConnections(connections, inner);
             }
         }
@@ -77,48 +75,34 @@ public final class Connection implements Comparable<Connection> {
         }
     }
 
-    private static boolean hasInput(InnerNode node, ArrayList<Connection> connections, HashSet<InnerNode> visited, HashMap<InnerNode, Boolean> hasInputCache) {
+    private static boolean hasInput(InnerNode node, ArrayList<Connection> connections, HashSet<InnerNode> visited) {
         visited.add(node);
-        Boolean cached = hasInputCache.getOrDefault(node, null);
-        if (cached != null) {
-            return cached;
-        }
         for (Connection con : connections) {
             if (con.target != node) continue;
             if (con.source instanceof InputNode) {
-                hasInputCache.put(node, true);
                 return true;
             }
             InnerNode source = (InnerNode) con.source;
-            if (!visited.contains(source) && hasInput(source, connections, visited, hasInputCache)) {
-                hasInputCache.put(node, true);
+            if (!visited.contains(source) && hasInput(source, connections, visited)) {
                 return true;
             }
         }
-        hasInputCache.put(node, false);
         return false;
     }
 
-    private static boolean hasOutput(InnerNode node, ArrayList<Connection> connections, HashSet<InnerNode> visited, HashMap<InnerNode, Boolean> hasOutputCache) {
+    private static boolean hasOutput(InnerNode node, ArrayList<Connection> connections, HashSet<InnerNode> visited) {
         visited.add(node);
-        Boolean cached = hasOutputCache.getOrDefault(node, null);
-        if (cached != null) {
-            return cached;
-        }
         for (Connection con : connections) {
             if (con.source != node) continue;
             if (con.target instanceof OutputNode) {
-                hasOutputCache.put(node, true);
                 return true;
             }
 
             InnerNode target = (InnerNode) con.target;
-            if (!visited.contains(target) && hasOutput(target, connections, visited, hasOutputCache)) {
-                hasOutputCache.put(node, true);
+            if (!visited.contains(target) && hasOutput(target, connections, visited)) {
                 return true;
             }
         }
-        hasOutputCache.put(node, false);
         return false;
     }
 
