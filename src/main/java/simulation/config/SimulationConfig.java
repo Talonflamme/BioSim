@@ -82,6 +82,10 @@ public class SimulationConfig {
         return type;
     }
 
+    public int getAnimationFrequency() {
+        return animationFrequency;
+    }
+
     /**
      * The rate of mutations. E.g: 0.001 = 0.1%, every 1 thousand bits copied, there is an error.
      */
@@ -92,11 +96,17 @@ public class SimulationConfig {
      */
     private final boolean uniqueColors;
     private final Type type;
+    /**
+     * Dictates which of the generations are to be animated. 1 means every generation. 3 means every third generation
+     * and so on.
+     */
+    private final int animationFrequency;
 
     @JsonCreator
     public SimulationConfig(@JsonProperty(value = "stepsPerGen", required = true) int stepsPerGen,
                             @JsonProperty(value = "type", required = true) Type type,
                             @JsonProperty(value = "numGenerations", required = true) int numGenerations,
+                            @JsonProperty(value = "animationFrequency", defaultValue = "1") int animationFrequency,
                             @JsonProperty(value = "populationSize", required = true) int populationSize,
                             @JsonProperty(value = "boardWidth", required = true) int boardWidth,
                             @JsonProperty(value = "boardHeight", required = true) int boardHeight,
@@ -116,6 +126,7 @@ public class SimulationConfig {
         this.numGenerations = numGenerations;
         this.uniqueColors = uniqueColors;
         this.type = type;
+        this.animationFrequency = animationFrequency;
 
         if (this.stepsPerGen < 1) {
             throw new ConfigError("stepsPerGen should be greater than 1");
@@ -143,6 +154,9 @@ public class SimulationConfig {
         }
         if (this.mutationRate < 0 || this.mutationRate > 1) {
             throw new ConfigError("mutationRate should be between 0 and 1");
+        }
+        if (this.animationFrequency < 1) {
+            throw new ConfigError("Animation frequency must be at least 1");
         }
     }
 

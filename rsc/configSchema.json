@@ -10,6 +10,11 @@
         "Live", "Compute"
       ]
     },
+    "animationFrequency": {
+      "$ref": "#/definitions/positiveInteger",
+      "description": "The frequency of creating animations. 1 means every generation is animated, 3 every third, and so on.",
+      "default": 1
+    },
     "numGenerations": {
       "$ref": "#/definitions/positiveInteger"
     },

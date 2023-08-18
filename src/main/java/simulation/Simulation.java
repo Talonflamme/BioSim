@@ -186,7 +186,12 @@ public class Simulation {
             getReport().newGeneration(gen, aliveCount);
 
             visualizer.addAlive(agents, 2.5f);
-            visualizer.saveRecordingThreaded("rsc/gens/gen" + gen + ".svg");
+
+            if (gen % config.getAnimationFrequency() == 0 || gen == generations - 1) {
+                visualizer.saveRecordingThreaded("rsc/gens/gen" + gen + ".svg");
+            } else {
+                visualizer.clear();
+            }
 
             if (gen == generations - 1) continue;
 
