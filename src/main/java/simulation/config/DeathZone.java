@@ -56,7 +56,7 @@ public class DeathZone extends Selection {
     public boolean survives(Agent agent) {
         if (!isActive()) return true;
         for (Region region : regions) {
-            if (region.contains(agent.getX(), agent.getY())) {
+            if (region.contains(agent.getX() + 0.5f, agent.getY() + 0.5f)) {
                 return reverse;
             }
         }
@@ -110,6 +110,21 @@ public class DeathZone extends Selection {
             this.reverse = reverse;
         }
 
+        private static ShapeRegion getRectRegion(ObjectNode args, SimulationConfig config, boolean reverse) throws ConfigError {
+            int x = getLength(args, "x", 0, config.getBoardWidth());
+            int y = getLength(args, "y", 0, config.getBoardHeight());
+            int width = getLength(args, "width", 1, config.getBoardWidth());
+            int height = getLength(args, "height", 1, config.getBoardHeight());
+            return new ShapeRegion(new Rectangle(x, y, width, height), reverse);
+        }
+
+        private static ShapeRegion getEllipseRegion(ObjectNode args, SimulationConfig config, boolean reverse) throws ConfigError {
+            int cx = getLength(args, "cx", 0, config.getBoardWidth());
+            int cy = getLength(args, "cy", 0, config.getBoardHeight());
+            int r = getInt(args, "r", 1);
+            return new ShapeRegion(new Ellipse2D.Float(cx - r, cy - r, r * 2, r * 2), reverse);
+        }
+
         static Region parse(JsonNode node, SimulationConfig config, boolean reverse) throws ConfigError {
             if (!node.isObject()) {
                 throw new ConfigError("Region args should be an object");
@@ -117,8 +132,8 @@ public class DeathZone extends Selection {
             JsonNode n = assertType((ObjectNode) node, "type", JsonNode::isTextual);
             String type = n.asText();
             return switch (type.toLowerCase()) {
-                case "rect" -> new RectRegion((ObjectNode) node, config, reverse);
-                case "circle" -> new CircleRegion((ObjectNode) node, config, reverse);
+                case "rect" -> getRectRegion((ObjectNode) node, config, reverse);
+                case "circle" -> getEllipseRegion((ObjectNode) node, config, reverse);
                 default -> throw new ConfigError("Unknown type: " + type);
             };
         }
@@ -139,7 +154,7 @@ public class DeathZone extends Selection {
             }
         }
 
-        abstract boolean contains(int x, int y);
+        abstract boolean contains(float x, float y);
 
         /**
          * Writes to the keyframes.
@@ -175,25 +190,17 @@ public class DeathZone extends Selection {
         abstract void draw(Graphics2D g, float animationProgress);
     }
 
-    private static final class RectRegion extends Region {
-        private final int x, y, width, height;
+    private static final class ShapeRegion extends Region {
+        private final Shape shape;
 
-        private RectRegion(ObjectNode args, SimulationConfig config, boolean reverse) throws ConfigError {
+        ShapeRegion(Shape shape, boolean reverse) {
             super(reverse);
-            x = getLength(args, "x", 0, config.getBoardWidth());
-            y = getLength(args, "y", 0, config.getBoardHeight());
-            width = getLength(args, "width", 1, config.getBoardWidth());
-            height = getLength(args, "height", 1, config.getBoardHeight());
+            this.shape = shape;
         }
 
         @Override
-        public String toString() {
-            return "RectRegion[x=%d, y=%d, width=%d, height=%d]".formatted(x, y, width, height);
-        }
-
-        @Override
-        boolean contains(int x, int y) {
-            return x >= this.x && y >= this.y && x < this.x + this.width && y < this.y + this.height;
+        boolean contains(float x, float y) {
+            return shape.contains(x, y);
         }
 
         @Override
@@ -212,85 +219,49 @@ public class DeathZone extends Selection {
             return 1;
         }
 
-        private String rectPath() {
-            return "M%d %dh%dv%dH%1$dV%2$d".formatted(x, y, width, height);
+
+        private static String rectPath(Rectangle r) {
+            return "M%d %dh%dv%dH%1$dV%2$d".formatted(r.x, r.y, r.width, r.height);
+        }
+
+        private static String ellipsePath(Ellipse2D.Float e) {
+            float rx = e.width / 2f;
+            float ry = e.height / 2f;
+            String pathFormat = "M%s,%sa%s,%s 0 1,0 %s,0a%s,%s 0 1,0 -%s,0 Z";
+            String formattedPath = String.format(pathFormat, format(e.x), format(e.y + ry),
+                    format(rx), format(ry), format(rx * 2),
+                    format(rx), format(ry), format(rx * 2));
+            return formattedPath;
+        }
+
+        private String toPath() {
+            if (shape instanceof Rectangle rect) {
+                return rectPath(rect);
+            } else if (shape instanceof Ellipse2D.Float ellipse) {
+                return ellipsePath(ellipse);
+            } else {
+                throw new RuntimeException("Unsupported Shape: " + shape);
+            }
         }
 
         @Override
         public void writeToElements(TextStringBuilder elements, int id) {
-            addPath(elements, rectPath(), id);
+            addPath(elements, toPath(), id);
         }
 
         @Override
         void draw(Graphics2D g, float animationProgress) {
-            g.setStroke(new BasicStroke(2));
             float transparency = 1f - Math.abs(animationProgress - 0.5f) * 2f;
             g.setColor(changeAlpha(DEATH_ZONE_COLOR, transparency));
-            g.fillRect(x + 1, y + 1, width - 2, height - 2);
-        }
-    }
 
-    private static final class CircleRegion extends Region {
-        private final int cx, cy, r;
-
-        private CircleRegion(ObjectNode args, SimulationConfig config, boolean reverse) throws ConfigError {
-            super(reverse);
-            cx = getLength(args, "cx", 0, config.getBoardWidth());
-            cy = getLength(args, "cy", 0, config.getBoardHeight());
-            r = getInt(args, "r", 1);
-        }
-
-        @Override
-        public String toString() {
-            return "CircleRegion[cx=%d, cy=%d, r=%d]".formatted(cx, cy, r);
-        }
-
-        @Override
-        boolean contains(int x, int y) {
-            int dx = cx - x;
-            int dy = cy - y;
-            return dx * dx + dy * dy <= r * r;
-        }
-
-        @Override
-        void writeToAnimation(TextStringBuilder sb, float start, float end, int id) {
-            sb.append("@keyframes kf")
-                    .append(id).append("{")
-                    .append("0%{opacity:0}")
-                    .append(format(start * 100)).append("%{opacity:0}")
-                    .append(format((end + start) * 50f)).append("%{opacity:1}")
-                    .append(format(end * 100f)).append("%{opacity:0;visibility:hidden}")
-                    .appendln("}");
-        }
-
-        @Override
-        int numAnimationIDs() {
-            return 1;
-        }
-
-        private String circlePath() {
-            return "M%d %d m-%d,0 a%3$d,%3$d 0 1,1 %d,0 a%3$d,%3$d 0 1,1 -%4$d,0".formatted(cx, cy, r, r * 2);
-        }
-
-        @Override
-        public void writeToElements(TextStringBuilder elements, int id) {
-            addPath(elements, circlePath(), id);
-        }
-
-        @Override
-        void draw(Graphics2D g, float animationProgress) {
-            g.setStroke(new BasicStroke(2));
-            float transparency = 1f - Math.abs(animationProgress - 0.5f) * 2f;
-            g.setColor(changeAlpha(DEATH_ZONE_COLOR, transparency));
-            Shape circle = new Ellipse2D.Float(cx - r, cy - r, r * 2, r * 2);
             if (reverse) {
                 int w = Simulation.config().getBoardWidth();
                 int h = Simulation.config().getBoardHeight();
                 Area area = new Area(new Rectangle(0, 0, w, h));
-                area.subtract(new Area(circle));
+                area.subtract(new Area(shape));
                 g.fill(area);
             } else {
-                g.fill(circle);
+                g.fill(shape);
             }
         }
     }
