@@ -1,17 +1,10 @@
 package visualization.live;
 
-import simulation.Agent;
 import simulation.Simulation;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
 
-import static utility.Utility.*;
-import static visualization.Board.BACKGROUND_COLOR;
-import static visualization.Board.RECT_OUTLINE_COLOR;
+import static utility.Utility.yellow;
 
 public class LiveSimulationWindow {
     private final JFrame frame;
@@ -24,7 +17,7 @@ public class LiveSimulationWindow {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setResizable(false);
 
-        draw = new Draw();
+        draw = new Draw(simulation, frame);
 
         frame.pack();
         frame.setLocationRelativeTo(null);
@@ -131,193 +124,5 @@ public class LiveSimulationWindow {
      */
     private void animateSelection(long durationMs) {
         animate(durationMs, draw.selection::animate);
-    }
-
-    private class Draw extends JPanel {
-        final AgentsPanel agents;
-        final SelectionPanel selection;
-
-        Draw() {
-
-            setLayout(null);
-            setBackground(new Color(43, 45, 48));
-            LiveSimulationWindow.this.frame.setContentPane(this);
-            setPreferredSize(new Dimension(1180, 770));
-
-            agents = new AgentsPanel();
-            add(agents);
-            agents.center(1180, 770);
-
-            selection = new SelectionPanel();
-            add(selection);
-            selection.center(1180, 770);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-        }
-    }
-
-    private abstract class BoardPanel extends JPanel {
-        static final int MAX_HEIGHT = 700;
-        static final int MAX_WIDTH = 900;
-
-        /**
-         * Convert in game units to pixels.
-         */
-        float factor;
-        private float animationProgress;
-
-        protected BoardPanel() {
-            super();
-            animationProgress = 1f;
-        }
-
-        void center(int parentWidth, int parentHeight) {
-            int boardWidth = simulation.getConfig().getBoardWidth();
-            int boardHeight = simulation.getConfig().getBoardHeight();
-            factor = Math.min((float) MAX_WIDTH / boardWidth, (float) MAX_HEIGHT / boardHeight);
-            float w = boardWidth * factor;
-            float h = boardHeight * factor;
-            setBounds((int) Math.floor((parentWidth - w) / 2f),
-                    (int) Math.floor((parentHeight - h) / 2f),
-                    (int) Math.ceil(w),
-                    (int) Math.ceil(h));
-        }
-
-        @Override
-        protected void paintComponent(Graphics g1d) {
-            super.paintComponent(g1d);
-            Graphics2D g = (Graphics2D) g1d.create();
-            draw(g, animationProgress);
-            g.dispose();
-        }
-
-
-        /**
-         * Animates between the last state and the current.
-         *
-         * @param progress The progress of the animation. Should be between 0 and 1.
-         */
-        void animate(float progress) {
-            assert 0f <= progress && progress <= 1f;
-            this.animationProgress = progress;
-            this.repaint();
-        }
-
-        /**
-         * Draw this component.
-         *
-         * @param g                 The Graphics2D to draw on. It is cloned and automatically disposed.
-         * @param animationProgress How far the animation is in progress. Value from of 0 to 1.
-         */
-        abstract void draw(Graphics2D g, float animationProgress);
-    }
-
-    private class AgentsPanel extends BoardPanel {
-
-        AgentsPanel() {
-            super();
-            setLayout(null);
-            setBackground(BACKGROUND_COLOR);
-        }
-
-        void drawGrid(Graphics2D g) {
-            int w = getWidth();
-            int h = getHeight();
-            Stroke thin = new BasicStroke(0.5f);
-            Stroke thick = new BasicStroke(1f);
-            g.setColor(RECT_OUTLINE_COLOR);
-            Color other = new Color(RECT_OUTLINE_COLOR.getRed(), RECT_OUTLINE_COLOR.getGreen(), RECT_OUTLINE_COLOR.getBlue(), 100);
-            // vertical
-            // we need a counter variable, since floating points miss precision to check if it is divisible
-            int count = 0;
-            for (float i = 0; i <= w; i += factor) {
-                boolean isThick = count++ % 10 == 0;
-                g.setStroke(isThick ? thick : thin);
-                g.setColor(isThick ? RECT_OUTLINE_COLOR : other);
-                g.draw(new Line2D.Float(i, 0, i, h));
-            }
-            // horizontal
-            count = 0;
-            for (float i = 0; i <= h; i += factor) {
-                boolean isThick = count++ % 10 == 0;
-                g.setStroke(isThick ? thick : thin);
-                g.setColor(isThick ? RECT_OUTLINE_COLOR : other);
-                g.draw(new Line2D.Float(0, i, w, i));
-            }
-
-            g.setStroke(thick);
-            g.setColor(RECT_OUTLINE_COLOR);
-            g.draw(new Line2D.Float(0.5f, 0, 0.5f, h)); // vertical left
-            g.draw(new Line2D.Float(0, 0.5f, w, 0.5f)); // horizontal top
-        }
-
-        void drawAgents(Graphics2D g, float animationProgress, float deadAgentOpacity) {
-            Agent[] agents = simulation.getAgents();
-            if (agents == null) return;
-
-            for (Agent agent : agents) {
-                float alpha = agent.isAlive() ? 1 : deadAgentOpacity;
-                if (alpha == 0) continue;
-                if (alpha == 1) {
-                    g.setColor(agent.getBrain().getColor());
-                } else {
-                    g.setColor(changeAlpha(agent.getBrain().getColor(), alpha));
-                }
-
-                int lastX = agent.getLastX();
-                int lastY = agent.getLastY();
-                int currentX = agent.getX();
-                int currentY = agent.getY();
-                float x = lastX + animationProgress * (currentX - lastX);
-                float y = lastY + animationProgress * (currentY - lastY);
-
-                g.fill(new Ellipse2D.Float(x * factor, y * factor, factor, factor));
-            }
-        }
-
-        /**
-         * Called from {@link SelectionPanel#draw}
-         *
-         * @param deadAgentOpacity the alpha value from 0-1 of dead agents
-         */
-        void draw(Graphics2D g, float animationProgress, float deadAgentOpacity) {
-            g.setColor(getBackground());
-            g.fillRect(0, 0, getWidth(), getHeight());
-
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            drawGrid(g);
-            drawAgents(g, animationProgress, deadAgentOpacity);
-        }
-
-        @Override
-        void draw(Graphics2D g, float animationProgress) {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            drawGrid(g);
-            drawAgents(g, animationProgress, 0);
-        }
-    }
-
-    private class SelectionPanel extends BoardPanel {
-        SelectionPanel() {
-            super();
-            setBackground(TRANSPARENT);
-        }
-
-        @Override
-        void draw(Graphics2D g, float animationProgress) {
-            draw.agents.draw(g, animationProgress, animationProgress < 0.5f ? 1 : 2 * (1f - animationProgress));
-            AffineTransform tx = g.getTransform();
-            tx.scale(factor, factor);
-            g.setTransform(tx);
-
-            for (var selection : simulation.getConfig().getSelection()) {
-                selection.draw(g, animationProgress);
-            }
-        }
     }
 }
