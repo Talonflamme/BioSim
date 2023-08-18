@@ -121,8 +121,40 @@ public class DeathZone extends Selection {
         private static ShapeRegion getEllipseRegion(ObjectNode args, SimulationConfig config, boolean reverse) throws ConfigError {
             int cx = getLength(args, "cx", 0, config.getBoardWidth());
             int cy = getLength(args, "cy", 0, config.getBoardHeight());
-            int r = getInt(args, "r", 1);
-            return new ShapeRegion(new Ellipse2D.Float(cx - r, cy - r, r * 2, r * 2), reverse);
+            float rx;
+            float ry;
+            JsonNode r_node = args.get("r");
+            JsonNode rx_node = args.get("rx");
+            JsonNode ry_node = args.get("ry");
+            if (r_node != null) {
+                if (rx_node != null || ry_node != null) {
+                    throw new ConfigError("Either r or rx & ry must be set");
+                }
+
+                if (!r_node.isNumber() || r_node.asDouble() <= 0) {
+                    throw new ConfigError("r must be a number greater than 0");
+                } else {
+                    rx = (float) r_node.asDouble();
+                    ry = rx;
+                }
+            } else {
+                if (rx_node == null || ry_node == null) {
+                    throw new ConfigError("Either r or rx & ry must be set");
+                }
+
+                if (!rx_node.isNumber() || rx_node.asDouble() <= 0) {
+                    throw new ConfigError("rx must be a number greater than 0");
+                }
+
+                if (!ry_node.isNumber() || ry_node.asDouble() <= 0) {
+                    throw new ConfigError("ry must be a number greater than 0");
+                }
+
+                rx = (float) rx_node.asDouble();
+                ry = (float) ry_node.asDouble();
+            }
+
+            return new ShapeRegion(new Ellipse2D.Float(cx - rx, cy - ry, rx * 2, ry * 2), reverse);
         }
 
         static Region parse(JsonNode node, SimulationConfig config, boolean reverse) throws ConfigError {

@@ -109,17 +109,42 @@
                             },
                             "cy": {
                               "$ref": "#/definitions/length"
-                            },
-                            "r": {
-                              "$ref": "#/definitions/positiveInteger"
                             }
                           },
+                          "oneOf": [
+                            {
+                              "properties": {
+                                "r": {
+                                  "type": "number",
+                                  "exclusiveMinimum": 0
+                                }
+                              },
+                              "required": [
+                                "r"
+                              ]
+                            },
+                            {
+                              "properties": {
+                                "rx": {
+                                  "type": "number",
+                                  "exclusiveMinimum": 0
+                                },
+                                "ry": {
+                                  "type": "number",
+                                  "exclusiveMinimum": 0
+                                }
+                              },
+                              "required": [
+                                "rx",
+                                "ry"
+                              ]
+                            }
+                          ],
                           "additionalProperties": false,
                           "required": [
                             "type",
                             "cx",
-                            "cy",
-                            "r"
+                            "cy"
                           ]
                         }
                       ]
