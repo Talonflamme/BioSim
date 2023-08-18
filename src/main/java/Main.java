@@ -14,10 +14,15 @@ public class Main {
 
         try (Report report = Report.create(config, "rsc/logs.log")) {
             Simulation simulation = new Simulation(configFile, report);
-//            simulation.start();
-            LiveSimulationWindow window = new LiveSimulationWindow(simulation);
-            window.show();
-            window.start();
+            if (config.getType() == SimulationConfig.Type.Live) {
+                LiveSimulationWindow window = new LiveSimulationWindow(simulation);
+                window.show();
+                window.start();
+            } else {
+                report.enable(Report.Feature.AllGenerations);
+                report.enable(Report.Feature.Compressed);
+                simulation.start();
+            }
         }
     }
 }

@@ -78,6 +78,10 @@ public class SimulationConfig {
         return uniqueColors;
     }
 
+    public Type getType() {
+        return type;
+    }
+
     /**
      * The rate of mutations. E.g: 0.001 = 0.1%, every 1 thousand bits copied, there is an error.
      */
@@ -87,9 +91,11 @@ public class SimulationConfig {
      * If set to {@code false}, each agent will get a color based on it surviving.
      */
     private final boolean uniqueColors;
+    private final Type type;
 
     @JsonCreator
     public SimulationConfig(@JsonProperty(value = "stepsPerGen", required = true) int stepsPerGen,
+                            @JsonProperty(value = "type", required = true) Type type,
                             @JsonProperty(value = "numGenerations", required = true) int numGenerations,
                             @JsonProperty(value = "populationSize", required = true) int populationSize,
                             @JsonProperty(value = "boardWidth", required = true) int boardWidth,
@@ -109,12 +115,16 @@ public class SimulationConfig {
         this.selection = Selection.parse(selection, this);
         this.numGenerations = numGenerations;
         this.uniqueColors = uniqueColors;
+        this.type = type;
 
         if (this.stepsPerGen < 1) {
             throw new ConfigError("stepsPerGen should be greater than 1");
         }
         if (this.numGenerations < 1) {
             throw new ConfigError("numGenerations should be greater than 0");
+        }
+        if (this.type == null) {
+            throw new ConfigError("Type should be given");
         }
         if (this.boardWidth < 1) {
             throw new ConfigError("boardWidth should be greater than 1");
@@ -169,5 +179,10 @@ public class SimulationConfig {
 
     public Selection[] getSelection() {
         return selection;
+    }
+
+    public enum Type {
+        Live,
+        Compute
     }
 }
