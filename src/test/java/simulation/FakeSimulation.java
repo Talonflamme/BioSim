@@ -18,7 +18,7 @@ public class FakeSimulation extends Simulation {
     }
 
     @Override
-    protected SimulationState getState() {
+    public SimulationState getState() {
         return state;
     }
 
