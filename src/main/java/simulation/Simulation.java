@@ -217,29 +217,34 @@ public class Simulation {
                 state = SimulationState.BeforeStep;
             }
             case BeforeStep -> {
-                int gen = progress.getGeneration();
+                step();
+                state = SimulationState.AfterStep;
+            }
+            case AfterStep -> {
                 int step = progress.getStep();
+                int gen = progress.getGeneration();
                 if (step + 1 >= config.getStepsPerGen()) {
                     if (gen + 1 >= config.getNumGenerations()) {
                         state = SimulationState.Inactive;
-                        return;
+                    } else {
+                        state = SimulationState.Selection;
                     }
-                    state = SimulationState.Selection;
-                    return;
+                } else {
+                    state = SimulationState.BeforeStep;
+                    progress.setStep(step + 1);
                 }
-                progress.setStep(step + 1);
-                step();
-                state = SimulationState.BeforeStep;
             }
             case Selection -> {
                 int gen = progress.getGeneration();
                 int aliveCount = killAgents();
                 getReport().newGeneration(gen, aliveCount);
-                state = SimulationState.NewGeneration;
+                state = SimulationState.AfterAnimation;
             }
+            case AfterAnimation -> state = SimulationState.NewGeneration;
             case NewGeneration -> {
                 int gen = progress.getGeneration();
                 progress.setGeneration(gen + 1);
+                progress.setStep(0);
                 agents = generateAgents(agents);
                 grid.clear();
                 grid.setAgents(agents);
@@ -292,6 +297,10 @@ public class Simulation {
 
     public SimulationProgress getProgress() {
         return progress;
+    }
+
+    public Agent[] getAgents() {
+        return agents;
     }
 
     public Grid getGrid() {
@@ -420,6 +429,8 @@ public class Simulation {
          * State when agents are killed and selected. Mainly {@link #killAgents() Simulation.killAgents()} is called.
          */
         Selection,
+        AfterStep,
+        AfterAnimation,
         /**
          * State when a new generation is created
          */

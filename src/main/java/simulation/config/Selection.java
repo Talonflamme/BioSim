@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import simulation.Agent;
 
+import java.awt.*;
 import java.util.function.Predicate;
 
 import static utility.Utility.yellow;
@@ -136,4 +137,13 @@ public abstract class Selection {
      * @param id the id used for the @keyframes identifier.
      */
     public abstract void writeElements(TextStringBuilder elements, int id);
+
+    /**
+     * Draw this selection process. Only called when simulation is controlled through
+     * {@link visualization.live.LiveSimulationWindow LiveSimulationWindow}
+     * @param g the Graphics2D object to draw with. Is a clone and is automatically disposed.
+     * @param animationProgress the animation progress. Value between 0 and 1 representing
+     *                         how far the animation was already animated. E.g.: {@code 52%} -> {@code 0.52f}
+     */
+    public abstract void draw(Graphics2D g, float animationProgress);
 }
