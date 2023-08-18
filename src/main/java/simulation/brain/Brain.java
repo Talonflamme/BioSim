@@ -273,6 +273,7 @@ public class Brain {
 
     /**
      * Convert the given probability to a boolean by generating a Random number using {@link Utility#Rand Rand}
+     *
      * @param probability The probability given as a float of range 0 to 1.
      * @return true with the given probability. false otherwise.
      */
@@ -284,6 +285,7 @@ public class Brain {
 
     /**
      * Performs the forward propagation of the neural network.
+     *
      * @param agent the agent to which this brain belongs.
      * @return the actionValues for each {@link ActionType} as an array.
      */
@@ -292,7 +294,7 @@ public class Brain {
         HashMap<InputNode, Float> inputValues = new HashMap<>();
         ArrayList<InnerNode> innerNodes = new ArrayList<>();
         for (Connection con : connections) {
-            if (con.source() instanceof InnerNode inner) {
+            if (con.source() instanceof InnerNode inner && !innerNodes.contains(inner)) {
                 innerNodes.add(inner);
             } else if (con.source() instanceof InputNode input) {
                 float value = Sensors.getValue(agent, input.getType());

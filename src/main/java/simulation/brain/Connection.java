@@ -90,7 +90,7 @@ public final class Connection implements Comparable<Connection> {
                 return true;
             }
             InnerNode source = (InnerNode) con.source;
-            if (!visited.contains(source) && hasOutput(source, connections, visited, hasInputCache)) {
+            if (!visited.contains(source) && hasInput(source, connections, visited, hasInputCache)) {
                 hasInputCache.put(node, true);
                 return true;
             }
