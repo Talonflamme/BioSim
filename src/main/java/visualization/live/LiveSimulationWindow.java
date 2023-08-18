@@ -63,9 +63,6 @@ public class LiveSimulationWindow {
     private void startAnimation(long elapsedMs) {
         switch (simulation.getState()) {
             case AfterStep -> animateStep(MS_PER_STEP - elapsedMs);
-            case NewGeneration -> {
-                System.out.println("New Generation!");
-            }
             case AfterSelection -> animateSelection(MS_SELECTION - elapsedMs);
         }
     }

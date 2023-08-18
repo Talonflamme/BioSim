@@ -183,7 +183,7 @@ public class Simulation {
             state = SimulationState.Selection;
             visualizer.addSelection(config, 5);
             int aliveCount = killAgents();
-            getReport().newGeneration(gen, aliveCount);
+            getReport().newGeneration(gen, aliveCount, agents);
 
             visualizer.addAlive(agents, 2.5f);
 
@@ -242,7 +242,7 @@ public class Simulation {
             case Selection -> {
                 int gen = progress.getGeneration();
                 int aliveCount = killAgents();
-                getReport().newGeneration(gen, aliveCount);
+                getReport().newGeneration(gen, aliveCount, agents);
                 state = SimulationState.AfterSelection;
             }
             case AfterSelection -> state = SimulationState.NewGeneration;

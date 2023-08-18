@@ -15,6 +15,7 @@ public class Main {
         try (Report report = Report.create(config, "rsc/logs.log")) {
             Simulation simulation = new Simulation(configFile, report);
             if (config.getType() == SimulationConfig.Type.Live) {
+                report.enable(Report.Feature.AllGenerations);
                 LiveSimulationWindow window = new LiveSimulationWindow(simulation);
                 window.show();
                 window.start();

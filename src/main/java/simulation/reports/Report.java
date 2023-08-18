@@ -1,11 +1,15 @@
 package simulation.reports;
 
+import simulation.Agent;
 import simulation.config.SimulationConfig;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 import static utility.Utility.*;
 
@@ -55,17 +59,41 @@ public class Report implements AutoCloseable {
      *
      * @param genNum     The generation number
      * @param aliveCount how many agents survived that generation.
+     * @param agents     The agents in an array. Used to display the most common gene.
      */
-    public void newGeneration(int genNum, int aliveCount) {
+    public void newGeneration(int genNum, int aliveCount, Agent[] agents) {
         int popSize = config.getPopulationSize();
         int numGens = config.getNumGenerations();
-        String str = "Generation: %d/%d. [%s] [%s]".formatted(genNum, numGens,
+        Map.Entry<String, Integer> mostCommonGene = mostCommonGene(agents);
+        String str = "Generation: %d/%d. [%s] [%s] [%s] [%s]".formatted(genNum, numGens,
                 green(format(aliveCount * 100f / popSize) + "%"),
-                red(format(100f - aliveCount * 100f / popSize) + "%"));
+                red(format(100f - aliveCount * 100f / popSize) + "%"),
+                yellow(mostCommonGene.getValue()),
+                blue(mostCommonGene.getKey()));
         file.println(str);
         if (isEnabled(Feature.AllGenerations) || genNum % 10 == 0) {
             System.out.println(str);
         }
+    }
+
+    private static Map.Entry<String, Integer> mostCommonGene(Agent[] agents) {
+        Map<String, Integer> counts = new HashMap<>();
+
+        for (Agent a : agents) {
+            String s = a.getBrain().genomeToString();
+            int value = counts.getOrDefault(s, 0);
+            counts.put(s, value + 1);
+        }
+
+        Map.Entry<String, Integer> most = null;
+
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            if (most == null || most.getValue() < entry.getValue()) {
+                most = entry;
+            }
+        }
+
+        return Objects.requireNonNull(most);
     }
 
     public void compressed(int beforeLength, int afterLength) {
