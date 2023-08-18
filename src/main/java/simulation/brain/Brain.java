@@ -33,6 +33,16 @@ public class Brain {
         this.connections = decode();
     }
 
+    public static Brain fromString(String s) {
+        String[] genes = s.split("\\s+");
+        int[] genome = new int[genes.length];
+        for (int i = 0; i < genes.length; i++) {
+            assert genes[i].length() == 8;
+            genome[i] = Integer.parseUnsignedInt(genes[i], 16);
+        }
+        return new Brain(genome);
+    }
+
     /**
      * Constructs the brain structure based on {@link Brain#genome}. Each int (gene) defines a single
      * connection between input and output nodes. This happens as follows:

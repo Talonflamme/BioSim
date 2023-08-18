@@ -80,6 +80,7 @@ public class Report implements AutoCloseable {
         Map<String, Integer> counts = new HashMap<>();
 
         for (Agent a : agents) {
+            if (!a.isAlive()) continue;
             String s = a.getBrain().genomeToString();
             int value = counts.getOrDefault(s, 0);
             counts.put(s, value + 1);
