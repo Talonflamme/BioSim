@@ -1,0 +1,117 @@
+package visualization.live;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import simulation.Agent;
+import simulation.brain.Brain;
+import simulation.reports.Report;
+import visualization.BrainVisualizer;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+
+import static utility.Utility.format;
+
+class InformationPanel extends JPanel {
+    private static final int PAD_X = 10;
+    private static final int PAD_Y = 10;
+    private static final Font H1 = new Font("Poppins", Font.BOLD, 30);
+    private static final Font H2 = new Font("Poppins", Font.BOLD, 24);
+    private static final Font H3 = new Font("Poppins", Font.PLAIN, 20);
+    private static final Font H6 = new Font("Poppins", Font.PLAIN, 8);
+
+    /**
+     * <p>
+     * Left: the brain that is most common.
+     * </p>
+     * <p>
+     * Right: the count of that brain
+     * </p>
+     */
+    private ImmutablePair<Brain, Integer> mostCommonBrain;
+    private BufferedImage brainImage;
+    private int gen;
+    /**
+     * <p>A value from 0 to 1 that represents how diverse the agents are.</p>
+     * <p>1 means higher diversity.</p>
+     * <p>0 means all are exactly equal.</p>
+     */
+    private float geneticDiversity;
+
+    /**
+     * @param leftAvailable   The available space for this component from the left.
+     * @param topAvailable    The available space for this component from the top.
+     * @param widthAvailable  The available width for this component.
+     * @param heightAvailable The available height for this component.
+     */
+    InformationPanel(int leftAvailable, int topAvailable, int widthAvailable, int heightAvailable) {
+        super();
+
+        setBounds(leftAvailable + PAD_X, topAvailable + PAD_Y,
+                widthAvailable - PAD_X * 2, heightAvailable - PAD_Y * 2);
+        setBackground(new Color(0x5586ff));
+    }
+
+    private static void drawCenter(Graphics2D g, String str, int xOff, int width, int y) {
+        int w = g.getFontMetrics().stringWidth(str);
+        g.drawString(str, xOff + (width - w) / 2, y);
+    }
+
+    private void drawText(Graphics2D g, int imgWidth, int xOff, int yOff) {
+        String str1 = "Most Common Gene (%d): ".formatted(mostCommonBrain.right);
+
+        String str2 = mostCommonBrain.left.genomeToString();
+
+        // draw text 1
+        g.setFont(H2);
+        g.setColor(Color.WHITE);
+        drawCenter(g, str1, xOff, imgWidth, yOff + 26);
+
+        // draw text 2
+        // todo more robust splitting text, this only really works for 16 genes
+        g.setColor(new Color(0x8855ff));
+        g.setFont(H6);
+        int str2len = str2.length() / 2;
+        drawCenter(g, str2.substring(0, str2len), xOff, imgWidth, yOff + 46);
+        drawCenter(g, str2.substring(str2len), xOff, imgWidth, yOff + 60);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g1d) {
+        super.paintComponent(g1d);
+
+        Graphics2D g = (Graphics2D) g1d;
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        g.setFont(H1);
+        g.setColor(Color.WHITE);
+        drawCenter(g, "Gen " + gen, 0, getWidth(), 40);
+
+        g.setFont(H3);
+        drawCenter(g, "Genetic Diversity: " + format(geneticDiversity * 100) + "%", 0, getWidth(), 70);
+
+        if (mostCommonBrain == null) return;
+
+        int width = getWidth() - 20;
+        int height = (int) ((BrainVisualizer.HEIGHT / (float) BrainVisualizer.WIDTH) * width);
+        g.drawImage(brainImage, 10, 90, getWidth() - 20, height, null);
+
+        drawText(g, width, 10, 90);
+    }
+
+
+    public void onNewGeneration(int gen, Agent[] agents) {
+        var mostCommonGene = Report.mostCommonGene(agents);
+        String genome = mostCommonGene.getKey();
+        int count = mostCommonGene.getValue();
+
+        mostCommonBrain = new ImmutablePair<>(Brain.fromString(genome), count);
+        BrainVisualizer visualizer = new BrainVisualizer(mostCommonBrain.left);
+        brainImage = visualizer.createImage();
+
+        this.gen = gen;
+        this.geneticDiversity = Report.geneticDiversity(agents);
+
+        this.repaint();
+    }
+}

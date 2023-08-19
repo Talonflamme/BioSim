@@ -11,7 +11,6 @@ import java.io.PrintWriter;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import static utility.Utility.*;
 
@@ -78,7 +77,7 @@ public class Report implements AutoCloseable {
         }
     }
 
-    private static Pair<String, Integer> mostCommonGene(Agent[] agents) {
+    public static Pair<String, Integer> mostCommonGene(Agent[] agents) {
         Map<String, Integer> counts = new HashMap<>();
 
         for (Agent a : agents) {
@@ -101,6 +100,15 @@ public class Report implements AutoCloseable {
         } else {
             return new ImmutablePair<>(most.getKey(), most.getValue());
         }
+    }
+
+    /**
+     * Returns the genetic diversity of the brains of all provided agents.
+     *
+     * @return a value from 0 to 1. The higher the value the more genetic diversity of the provided agents.
+     */
+    public static float geneticDiversity(Agent[] agents) {
+        return 0.98f; // todo
     }
 
     public void compressed(int beforeLength, int afterLength) {

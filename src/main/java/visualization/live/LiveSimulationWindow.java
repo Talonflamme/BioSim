@@ -1,6 +1,7 @@
 package visualization.live;
 
 import simulation.Simulation;
+import simulation.reports.Report;
 
 import javax.swing.*;
 
@@ -48,6 +49,11 @@ public class LiveSimulationWindow {
         System.out.println(yellow("Finished"));
     }
 
+    private void onNewGeneration() {
+        simulation.liveStep(); // create new generation
+        draw.information.onNewGeneration(simulation.getProgress().getGeneration(), simulation.getAgents());
+    }
+
     /**
      * starts an animation based on the {@link Simulation#getState state}.
      *
@@ -57,6 +63,7 @@ public class LiveSimulationWindow {
         switch (simulation.getState()) {
             case AfterStep -> animateStep(MS_PER_STEP - elapsedMs);
             case AfterSelection -> animateSelection(MS_SELECTION - elapsedMs);
+            case NewGeneration -> onNewGeneration();
         }
     }
 

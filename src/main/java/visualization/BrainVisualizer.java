@@ -15,8 +15,8 @@ public class BrainVisualizer {
     private static final Color SECONDARY_COLOR = new Color(0x0091ff);
     private static final Color RED_COLOR = new Color(0xfb3d5d);
     private static final Color GREEN_COLOR = new Color(0x3cfa60);
-    private static final int WIDTH = 860;
-    private static final int HEIGHT = 910;
+    public static final int WIDTH = 860;
+    public static final int HEIGHT = 910;
     private static final int PADDING = 80;
     private static final int RADIUS = 90;
 
