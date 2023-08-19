@@ -176,7 +176,7 @@ public class DeathZone extends Selection {
                 int h = Simulation.config().getBoardHeight();
                 // language=XML
                 elements.appendln("""
-                        <path d="M0 0h%dv%dh-%1$d Z %s" fill-rule="evenodd" fill="%s" style="animation-name:kf%d" />
+                        <path d="M0 0h%dv%dH0Z%s" fill-rule="evenodd" fill="%s" style="animation-name:kf%d" />
                         """.formatted(w, h, path, format(DEATH_ZONE_COLOR), id));
             } else {
                 // language=XML
@@ -259,11 +259,9 @@ public class DeathZone extends Selection {
         private static String ellipsePath(Ellipse2D.Float e) {
             float rx = e.width / 2f;
             float ry = e.height / 2f;
-            String pathFormat = "M%s,%sa%s,%s 0 1,0 %s,0a%s,%s 0 1,0 -%s,0 Z";
-            String formattedPath = String.format(pathFormat, format(e.x), format(e.y + ry),
+            return String.format("M%s %sa%s %s 0 1 0 %s 0a%s %s 0 1 0-%s 0Z", format(e.x), format(e.y + ry),
                     format(rx), format(ry), format(rx * 2),
                     format(rx), format(ry), format(rx * 2));
-            return formattedPath;
         }
 
         private String toPath() {

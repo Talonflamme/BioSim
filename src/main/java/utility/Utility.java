@@ -6,6 +6,7 @@ import java.awt.*;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,7 +86,44 @@ public class Utility {
             color = "#" + color.substring(3) + color.substring(1, 3);
         }
         Matcher matcher = colorFormatRegex.matcher(color);
-        return matcher.replaceAll("$1$2$3$4");
+        return optimizeColor(matcher.replaceAll("$1$2$3$4"));
+    }
+
+
+    private static String optimizeColor(String hex) {
+        return switch (hex) {
+            case "#f5f5dc" -> "beige";
+            case "#ffe4c4" -> "bisque";
+            case "#a52a2a" -> "brown";
+            case "#ff7f50" -> "coral";
+            case "#ffd700" -> "gold";
+            case "#808080" -> "gray";
+            case "#008000" -> "green";
+            case "#4b0082" -> "indigo";
+            case "#fffff0" -> "ivory";
+            case "#f0e68c" -> "khaki";
+            case "#faf0e6" -> "linen";
+            case "#800000" -> "maroon";
+            case "#000080" -> "navy";
+            case "#808000" -> "olive";
+            case "#ffa500" -> "orange";
+            case "#da70d6" -> "orchid";
+            case "#cd853f" -> "peru";
+            case "#ffc0cb" -> "pink";
+            case "#dda0dd" -> "plum";
+            case "#800080" -> "purple";
+            case "#f00" -> "red";
+            case "#fa8072" -> "salmon";
+            case "#a0522d" -> "sienna";
+            case "#c0c0c0" -> "silver";
+            case "#fffafa" -> "snow";
+            case "#d2b48c" -> "tan";
+            case "#008080" -> "teal";
+            case "#ff6347" -> "tomato";
+            case "#ee82ee" -> "violet";
+            case "#f5deb3" -> "wheat";
+            default -> hex;
+        };
     }
 
     private Utility() {

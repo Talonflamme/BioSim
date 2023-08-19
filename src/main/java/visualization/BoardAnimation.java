@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,7 +70,7 @@ public class BoardAnimation {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d" fill="none">
                     <defs>
                         <pattern id="_s" width="1" height="1" patternUnits="userSpaceOnUse">
-                            <path d="M1 0H0v1" stroke="%s" stroke-width="0.5" vector-effect="non-scaling-stroke" />
+                            <path d="M1 0H0v1" stroke="%s" stroke-width=".5" vector-effect="non-scaling-stroke" />
                         </pattern>
                         <pattern id="_g" width="10" height="10" patternUnits="userSpaceOnUse">
                             <path d="M0 0h10v10H0z" fill="url(#_s)" />
@@ -115,11 +117,55 @@ public class BoardAnimation {
         return sb.toString();
     }
 
-    private static final Pattern uselessWhitespace = Pattern.compile(";[\r\n\\s]*(?=})|([>{};:])\\s+|\r?\n|\\s+(?=[\\s<;>{}@]|$|/>)|(?<=^|\\D)0(?=\\.)");
+    private static final Pattern uselessWhitespace = Pattern.compile(";[\r\n\\s]*(?=})|([>{};:])\\s+|\r?\n|\\s+(?=[\\s<;>{}@]|$|/>)");
     private static final Pattern compressKeyframeNamesRegex = Pattern.compile("(?<=@keyframes\\s|animation-name:)kf(\\d+)(?:,kf(\\d+))?"); // currently only 2 animations
-    private static final Pattern duplicateKeyFramesPortions = Pattern.compile("([\\d.]+%)\\{([^}]+)}([\\d.]+%)\\{\\2");
+    private static final Pattern keyframesRegex = Pattern.compile("@keyframes\\s+([A-z0-9_-]+)\\{(?:[\\d.]+%\\{[^}]*})*\\s*}");
     private static final Pattern oneHundredPercentPortion = Pattern.compile("(?:(?<=[{]|\\d%,)100%|(\\d%\\{cx:\\d+;cy:\\d+})100%)(?=\\{cx)");
     private static final Pattern unnecessaryCxCyDefinition = Pattern.compile("(<circle[^/]*)\\s*c[xy]=\"0\"\\s*([^/]*/)");
+
+    private static final Pattern percentagesRegex = Pattern.compile("(?<=[^.\\d])(?=[.\\d]+%\\{)");
+
+    private static String keyframesReplacer(MatchResult match) {
+        String whole = match.group();
+        String[] percentages = percentagesRegex.split(whole);
+
+        HashMap<String, ArrayList<Float>> counter = new HashMap<>();
+        // start at 1: first element is '@keyframes kf'
+        for (int i = 1; i < percentages.length; i++) {
+            String s = percentages[i];
+            float percent = Float.parseFloat(s.substring(0, s.indexOf('{') - 1));
+            s = s.substring(s.indexOf('{'));
+
+            if (i == percentages.length - 1) {
+                s = s.substring(0, s.length() - 1); // end of @keyframes has "}" at end
+            }
+
+            ArrayList<Float> list = counter.computeIfAbsent(s, k -> new ArrayList<>());
+            list.add(percent);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(percentages[0]);
+        for (var entry : counter.entrySet()) {
+            for (float f : entry.getValue()) {
+                if (f == 100) {
+                    sb.append("to");
+                } else if (f == 0) {
+                    sb.append("0%");
+                } else if (0 == (int) f) {
+                    sb.append(format(f).substring(1)).append('%'); // remove 0 of for example '0.12'
+                } else {
+                    sb.append(format(f)).append('%');
+                }
+                sb.append(",");
+            }
+            sb.setLength(sb.length() - 1); // remove trailing ','
+            sb.append(entry.getKey());
+        }
+
+        sb.append('}');
+        return sb.toString();
+    }
 
     /**
      * Compresses the svg to be as small as possible
@@ -129,7 +175,7 @@ public class BoardAnimation {
         // white spaces removed
         String str = uselessWhitespace.matcher(svg).replaceAll("$1");
 
-        str = duplicateKeyFramesPortions.matcher(str).replaceAll("$1,$3{$2");
+        str = keyframesRegex.matcher(str).replaceAll(BoardAnimation::keyframesReplacer);
         str = oneHundredPercentPortion.matcher(str).replaceAll("$1to");
         str = unnecessaryCxCyDefinition.matcher(str).replaceAll("$1$2");
 
