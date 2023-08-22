@@ -108,7 +108,15 @@ public class Report implements AutoCloseable {
      * @return a value from 0 to 1. The higher the value the more genetic diversity of the provided agents.
      */
     public static float geneticDiversity(Agent[] agents) {
-        return 0.98f; // todo
+        int samples = agents.length / 2;
+        float sum = 0;
+        for (int i = 0; i < samples; i++) {
+            Agent a = Rand.choice(agents);
+            Agent b = Rand.choice(agents);
+            sum += a.getBrain().similarity(b.getBrain());
+        }
+        float result = 1f - sum / samples;
+        return result;
     }
 
     public void compressed(int beforeLength, int afterLength) {

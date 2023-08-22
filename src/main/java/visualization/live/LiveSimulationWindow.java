@@ -1,7 +1,6 @@
 package visualization.live;
 
 import simulation.Simulation;
-import simulation.reports.Report;
 
 import javax.swing.*;
 
@@ -63,7 +62,7 @@ public class LiveSimulationWindow {
         switch (simulation.getState()) {
             case AfterStep -> animateStep(MS_PER_STEP - elapsedMs);
             case AfterSelection -> animateSelection(MS_SELECTION - elapsedMs);
-            case NewGeneration -> onNewGeneration();
+            case NewGeneration, AfterInit -> onNewGeneration();
         }
     }
 

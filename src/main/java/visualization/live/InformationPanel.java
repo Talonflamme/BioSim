@@ -18,7 +18,7 @@ class InformationPanel extends JPanel {
     private static final Font H1 = new Font("Poppins", Font.BOLD, 30);
     private static final Font H2 = new Font("Poppins", Font.BOLD, 24);
     private static final Font H3 = new Font("Poppins", Font.PLAIN, 20);
-    private static final Font H6 = new Font("Poppins", Font.PLAIN, 8);
+    private static final Font H6 = new Font("Poppins", Font.PLAIN, 13);
 
     /**
      * <p>
@@ -61,6 +61,9 @@ class InformationPanel extends JPanel {
         String str1 = "Most Common Gene (%d): ".formatted(mostCommonBrain.right);
 
         String str2 = mostCommonBrain.left.genomeToString();
+        if (str2.length() > 71) { // 71 = length for 8 genes
+            str2 = str2.substring(0, 72);
+        }
 
         // draw text 1
         g.setFont(H2);
@@ -68,7 +71,6 @@ class InformationPanel extends JPanel {
         drawCenter(g, str1, xOff, imgWidth, yOff + 26);
 
         // draw text 2
-        // todo more robust splitting text, this only really works for 16 genes
         g.setColor(new Color(0x8855ff));
         g.setFont(H6);
         int str2len = str2.length() / 2;
@@ -101,16 +103,19 @@ class InformationPanel extends JPanel {
 
 
     public void onNewGeneration(int gen, Agent[] agents) {
+        this.geneticDiversity = Report.geneticDiversity(agents);
+
         var mostCommonGene = Report.mostCommonGene(agents);
         String genome = mostCommonGene.getKey();
         int count = mostCommonGene.getValue();
 
-        mostCommonBrain = new ImmutablePair<>(Brain.fromString(genome), count);
-        BrainVisualizer visualizer = new BrainVisualizer(mostCommonBrain.left);
-        brainImage = visualizer.createImage();
+        if (count > 1) {
+            mostCommonBrain = new ImmutablePair<>(Brain.fromString(genome), count);
+            BrainVisualizer visualizer = new BrainVisualizer(mostCommonBrain.left);
+            brainImage = visualizer.createImage();
 
-        this.gen = gen;
-        this.geneticDiversity = Report.geneticDiversity(agents);
+            this.gen = gen;
+        }
 
         this.repaint();
     }

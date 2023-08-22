@@ -28,7 +28,7 @@ public class Brain {
 
     private static final float WEIGHT_SCALE = Short.MAX_VALUE / 4f;
 
-    private Brain(int[] genome) {
+    Brain(int[] genome) {
         this.genome = genome;
         this.connections = decode();
     }
@@ -392,5 +392,25 @@ public class Brain {
         int y = (int) Math.copySign(hasY ? 1 : 0, moveY);
         Direction newForward = Direction.get(x, y);
         agent.queueMove(newForward);
+    }
+
+    public float similarity(Brain other) {
+        int count = 0; // how many bits different?
+        int numBits = genome.length * 32;
+
+        for (int i = 0; i < genome.length; i++) {
+            int a = genome[i];
+            int b = other.genome[i];
+            for (int j = 0; j < 32; j++) {
+                int bit1 = a >> j & 1;
+                int bit2 = b >> j & 1;
+                if (bit1 != bit2) {
+                    count++;
+                }
+            }
+        }
+
+        // multiply by 2, since two completely random agents should match by 50%
+        return 1f - (float) count / numBits;
     }
 }

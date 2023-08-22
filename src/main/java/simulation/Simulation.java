@@ -219,8 +219,9 @@ public class Simulation {
                 grid.clear();
                 agents = generateAgents();
                 grid.setAgents(agents);
-                state = SimulationState.BeforeStep;
+                state = SimulationState.AfterInit;
             }
+            case AfterInit -> state = SimulationState.BeforeStep;
             case BeforeStep -> {
                 step();
                 state = SimulationState.AfterStep;
@@ -436,6 +437,7 @@ public class Simulation {
         Selection,
         AfterStep,
         AfterSelection,
+        AfterInit,
         /**
          * State when a new generation is created
          */
