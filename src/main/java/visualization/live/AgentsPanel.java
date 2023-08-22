@@ -74,7 +74,7 @@ class AgentsPanel extends BoardPanel {
     }
 
     /**
-     * Called from {@link LiveSimulationWindow.SelectionPanel#draw}
+     * Called from {@link SelectionPanel#draw(Graphics2D, float)}
      *
      * @param deadAgentOpacity the alpha value from 0-1 of dead agents
      */

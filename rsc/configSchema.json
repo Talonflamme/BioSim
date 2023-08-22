@@ -31,6 +31,12 @@
     "boardHeight": {
       "$ref": "#/definitions/positiveInteger"
     },
+    "msPerStep": {
+      "$ref": "#/definitions/positiveNumber0"
+    },
+    "msPerSelection": {
+      "$ref": "#/definitions/positiveNumber0"
+    },
     "genes": {
       "$ref": "#/definitions/positiveInteger"
     },
@@ -189,6 +195,8 @@
     "type",
     "boardHeight",
     "boardWidth",
+    "msPerStep",
+    "msPerSelection",
     "maxInnerNeurons",
     "mutationRate",
     "populationSize",
@@ -202,6 +210,10 @@
     },
     "positiveInteger0": {
       "type": "integer",
+      "minimum": 0
+    },
+    "positiveNumber0": {
+      "type": "number",
       "minimum": 0
     },
     "length": {

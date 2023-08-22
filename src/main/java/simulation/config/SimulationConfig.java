@@ -86,6 +86,14 @@ public class SimulationConfig {
         return animationFrequency;
     }
 
+    public float getMsPerSelection() {
+        return msPerSelection;
+    }
+
+    public float getMsPerStep() {
+        return msPerStep;
+    }
+
     /**
      * The rate of mutations. E.g: 0.001 = 0.1%, every 1 thousand bits copied, there is an error.
      */
@@ -101,6 +109,14 @@ public class SimulationConfig {
      * and so on.
      */
     private final int animationFrequency;
+    /**
+     * How many milliseconds each step should take in visualization.
+     */
+    private final float msPerStep;
+    /**
+     * How many milliseconds each selection should take in visualization.
+     */
+    private final float msPerSelection;
 
     @JsonCreator
     public SimulationConfig(@JsonProperty(value = "stepsPerGen", required = true) int stepsPerGen,
@@ -114,7 +130,9 @@ public class SimulationConfig {
                             @JsonProperty(value = "maxInnerNeurons", required = true) int maxInnerNeurons,
                             @JsonProperty(value = "mutationRate", required = true) float mutationRate,
                             @JsonProperty(value = "selection", required = true) ObjectNode[] selection,
-                            @JsonProperty(value = "uniqueColors", defaultValue = "false") boolean uniqueColors) throws ConfigError {
+                            @JsonProperty(value = "uniqueColors", defaultValue = "false") boolean uniqueColors,
+                            @JsonProperty(value = "msPerStep", defaultValue = "50") float msPerStep,
+                            @JsonProperty(value = "msPerSelection", defaultValue = "6000") float msPerSelection) throws ConfigError {
         this.stepsPerGen = stepsPerGen;
         this.populationSize = populationSize;
         this.boardWidth = boardWidth;
@@ -127,7 +145,15 @@ public class SimulationConfig {
         this.uniqueColors = uniqueColors;
         this.type = type;
         this.animationFrequency = animationFrequency;
+        this.msPerStep = msPerStep;
+        this.msPerSelection = msPerSelection;
 
+        if (this.msPerSelection < 0) {
+            throw new ConfigError("msPerSelection must be greater or equal to 0");
+        }
+        if (this.msPerStep < 0) {
+            throw new ConfigError("msPerStep must be greater or equal to 0");
+        }
         if (this.stepsPerGen < 1) {
             throw new ConfigError("stepsPerGen should be greater than 1");
         }

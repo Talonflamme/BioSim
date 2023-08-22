@@ -27,14 +27,6 @@ public class LiveSimulationWindow {
         frame.setVisible(true);
     }
 
-    /**
-     * How many milliseconds it should take to display one step.
-     */
-    private static final long MS_PER_STEP = 50;
-    /**
-     * How many milliseconds it should take to display the selection process.
-     */
-    private static final long MS_SELECTION = 7_000;
     private static final double ANIMATION_REFRESH_RATE = 1000.0 / 60.0;
 
     public void start() {
@@ -60,8 +52,8 @@ public class LiveSimulationWindow {
      */
     private void startAnimation(long elapsedMs) {
         switch (simulation.getState()) {
-            case AfterStep -> animateStep(MS_PER_STEP - elapsedMs);
-            case AfterSelection -> animateSelection(MS_SELECTION - elapsedMs);
+            case AfterStep -> animateStep(simulation.getConfig().getMsPerStep() - elapsedMs);
+            case AfterSelection -> animateSelection(simulation.getConfig().getMsPerSelection() - elapsedMs);
             case NewGeneration, AfterInit -> onNewGeneration();
         }
     }
@@ -97,7 +89,8 @@ public class LiveSimulationWindow {
      * @param animationFunc the animation function. This function takes in a float between 0 and 1, which
      *                      represents the progress of this animation.
      */
-    private static void animate(long durationMs, AnimationConsumer animationFunc) {
+    private static void animate(double durationMs, AnimationConsumer animationFunc) {
+        if (durationMs == 0) return;
         double time = 0.0; // elapsed time since method start
         while (time < durationMs) {
             long start = System.currentTimeMillis();
@@ -116,7 +109,7 @@ public class LiveSimulationWindow {
      *
      * @param durationMs the duration this animation should last.
      */
-    private void animateStep(long durationMs) {
+    private void animateStep(double durationMs) {
         animate(durationMs, draw.agents::animate);
     }
 
@@ -125,7 +118,7 @@ public class LiveSimulationWindow {
      *
      * @param durationMs the duration this animation should last.
      */
-    private void animateSelection(long durationMs) {
+    private void animateSelection(double durationMs) {
         animate(durationMs, draw.selection::animate);
     }
 }
