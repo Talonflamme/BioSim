@@ -18,6 +18,7 @@ public class Report implements AutoCloseable {
     private final SimulationConfig config;
     private final BitSet enabledFeatures;
     private final PrintStream file;
+    private LastGenerationInfo lastGeneration;
 
     public Report(SimulationConfig config, PrintStream file) {
         this.config = config;
@@ -75,6 +76,8 @@ public class Report implements AutoCloseable {
         if (isEnabled(Feature.AllGenerations) || genNum % 10 == 0) {
             System.out.println(str);
         }
+
+        lastGeneration = new LastGenerationInfo(genNum - 1, (float) aliveCount / popSize);
     }
 
     public static Pair<String, Integer> mostCommonGene(Agent[] agents) {
@@ -115,8 +118,7 @@ public class Report implements AutoCloseable {
             Agent b = Rand.choice(agents);
             sum += a.getBrain().similarity(b.getBrain());
         }
-        float result = 1f - sum / samples;
-        return result;
+        return 1f - sum / samples;
     }
 
     public void compressed(int beforeLength, int afterLength) {
@@ -130,6 +132,10 @@ public class Report implements AutoCloseable {
             }
             System.out.println(str);
         }
+    }
+
+    public LastGenerationInfo getLastGeneration() {
+        return lastGeneration;
     }
 
     public void enable(Feature feature) {

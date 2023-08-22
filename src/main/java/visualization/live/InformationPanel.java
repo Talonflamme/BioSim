@@ -3,6 +3,7 @@ package visualization.live;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import simulation.Agent;
 import simulation.brain.Brain;
+import simulation.reports.LastGenerationInfo;
 import simulation.reports.Report;
 import visualization.BrainVisualizer;
 
@@ -37,6 +38,13 @@ class InformationPanel extends JPanel {
      * <p>0 means all are exactly equal.</p>
      */
     private float geneticDiversity;
+    /**
+     * A value representing the ratio of agents that survived last generation. Probably derived from
+     * {@link LastGenerationInfo#surviveRate()}. Always between {@code 0} and {@code 1}. Defaults to
+     * {@code 100%} (1).
+     * <p>Note: {@code 0} will never occur, since the simulation is cancelled when no agent is alive.</p>
+     */
+    private float surviveRate;
 
     /**
      * @param leftAvailable   The available space for this component from the left.
@@ -46,6 +54,8 @@ class InformationPanel extends JPanel {
      */
     InformationPanel(int leftAvailable, int topAvailable, int widthAvailable, int heightAvailable) {
         super();
+
+        surviveRate = 1f; // default to 100%
 
         setBounds(leftAvailable + PAD_X, topAvailable + PAD_Y,
                 widthAvailable - PAD_X * 2, heightAvailable - PAD_Y * 2);
@@ -65,12 +75,12 @@ class InformationPanel extends JPanel {
             str2 = str2.substring(0, 72);
         }
 
-        // draw text 1
+        // draw most common gene text
         g.setFont(H2);
         g.setColor(Color.WHITE);
         drawCenter(g, str1, xOff, imgWidth, yOff + 26);
 
-        // draw text 2
+        // draw genome text
         g.setColor(new Color(0x8855ff));
         g.setFont(H6);
         int str2len = str2.length() / 2;
@@ -92,6 +102,13 @@ class InformationPanel extends JPanel {
         g.setFont(H3);
         drawCenter(g, "Genetic Diversity: " + format(geneticDiversity * 100) + "%", 0, getWidth(), 70);
 
+
+        // draw survive rate text
+        String surviveRateText = "Survive Rate: %d%%".formatted(Math.round(surviveRate * 100f));
+        g.setColor(Color.WHITE);
+        g.setFont(H3);
+        g.drawString(surviveRateText, 120, 556);
+
         if (mostCommonBrain == null) return;
 
         int width = getWidth() - 20;
@@ -102,8 +119,16 @@ class InformationPanel extends JPanel {
     }
 
 
-    public void onNewGeneration(int gen, Agent[] agents) {
+    /**
+     * Repaints the component with updated values based on the parameters.
+     *
+     * @param gen         the number of generation.
+     * @param agents      the newly created agents.
+     * @param surviveRate the same value as {@link simulation.reports.LastGenerationInfo#surviveRate()}
+     */
+    public void onNewGeneration(int gen, Agent[] agents, float surviveRate) {
         this.geneticDiversity = Report.geneticDiversity(agents);
+        this.surviveRate = surviveRate;
 
         var mostCommonGene = Report.mostCommonGene(agents);
         String genome = mostCommonGene.getKey();

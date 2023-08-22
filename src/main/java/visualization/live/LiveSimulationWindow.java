@@ -42,7 +42,13 @@ public class LiveSimulationWindow {
 
     private void onNewGeneration() {
         simulation.liveStep(); // create new generation
-        draw.information.onNewGeneration(simulation.getProgress().getGeneration(), simulation.getAgents());
+
+        float surviveRate = 1f;
+        if (simulation.getReport().getLastGeneration() != null) {
+            surviveRate = simulation.getReport().getLastGeneration().surviveRate();
+        }
+
+        draw.information.onNewGeneration(simulation.getProgress().getGeneration(), simulation.getAgents(), surviveRate);
     }
 
     /**
