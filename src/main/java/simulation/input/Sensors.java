@@ -151,11 +151,9 @@ public class Sensors {
 
                 if (!grid.isBounds(x, y)) continue;
 
-                int nearness = (POPULATION_SCAN_RADIUS - Math.abs(i) + 1) * (POPULATION_SCAN_RADIUS - Math.abs(j) + 1);
-
-                maxValue += nearness;
+                maxValue++;
                 if (grid.get(x, y)) {
-                    value += nearness;
+                    value++;
                 }
             }
         }
