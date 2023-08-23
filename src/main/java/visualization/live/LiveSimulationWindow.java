@@ -48,11 +48,20 @@ public class LiveSimulationWindow {
             simulation.liveStep();
             long endMs = System.currentTimeMillis();
 
-            if (draw.information.userInput.state == UserInputPanel.UserInputState.FastForward) {
-                boolean isStep = simulation.getState() == Simulation.SimulationState.AfterStep;
-                startAnimationFixedTime(isStep ? 0.1 : 249);
-            } else {
-                startAnimation(endMs - startMs);
+            switch (draw.information.userInput.state) {
+                case FastForward -> {
+                    boolean isStep = simulation.getState() == Simulation.SimulationState.AfterStep;
+                    startAnimationFixedTime(isStep ? 0.1 : 249);
+                }
+                case Skip -> {
+                    boolean isNewGen = simulation.getState() == Simulation.SimulationState.AfterSelection;
+                    if (isNewGen) {
+                        // 20% -> agents opacity = 1; selection opacity = 0.4
+                        draw.selection.animate(0.2f);
+                        onNewGeneration();
+                    }
+                }
+                default -> startAnimation(endMs - startMs);
             }
         } while (simulation.getState() != Simulation.SimulationState.Inactive &&
                  draw.information.userInput.state != UserInputPanel.UserInputState.Pause);

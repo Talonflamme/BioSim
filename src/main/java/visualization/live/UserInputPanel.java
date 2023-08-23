@@ -22,17 +22,42 @@ class UserInputPanel extends JPanel {
         setBackground(TRANSPARENT);
     }
 
+    private static final float TRIANGLE_WIDTH = 16f;
+
     private Path2D getTriangleFastForward(float x) {
         float margin_y = 8f;
         float centerY = HEIGHT / 2f;
 
+        float widthThird = TRIANGLE_WIDTH / 3f;
         Path2D path = new Path2D.Float();
         path.moveTo(x, margin_y);
-        path.curveTo(x + 5f, 8f, x + 11, 16f, x + 16, centerY);
-        path.curveTo(x + 11f, 26f, x + 5, 34f,  x, HEIGHT - margin_y);
+        path.curveTo(x + widthThird, margin_y, x + widthThird * 2f, centerY - margin_y, x + TRIANGLE_WIDTH, centerY);
+        path.curveTo(x + widthThird * 2f, HEIGHT - centerY + margin_y, x + widthThird, HEIGHT - margin_y, x, HEIGHT - margin_y);
         path.closePath();
 
         return path;
+    }
+
+    private void drawSkip(Graphics2D g) {
+        float gap = 2f;
+        // * 2 since we have 2 gaps with 3 triangles
+        float width = TRIANGLE_WIDTH * 3 + gap * 2;
+
+        g.setColor(new Color(1f, 0f, 0f, 0.4f));
+        g.setStroke(new BasicStroke(2.5f));
+
+        // left
+        float left = (WIDTH - width) / 2f;
+        Path2D path = getTriangleFastForward(left);
+        g.fill(path);
+
+        // center
+        path = getTriangleFastForward(left + TRIANGLE_WIDTH + gap);
+        g.fill(path);
+
+        // right
+        path = getTriangleFastForward(left + (TRIANGLE_WIDTH + gap) * 2f);
+        g.fill(path);
     }
 
     private void drawFastForward(Graphics2D g) {
@@ -78,6 +103,7 @@ class UserInputPanel extends JPanel {
 
         switch (state) {
             case FastForward -> drawFastForward(g);
+            case Skip -> drawSkip(g);
             case Pause -> drawPause(g);
         }
     }
@@ -103,31 +129,39 @@ class UserInputPanel extends JPanel {
 
             @Override
             public void keyReleased(KeyEvent e) {
-                if (state == UserInputState.FastForward && e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                    if (e.isShiftDown()) {
-                        return; // shift = keep fast forwarding even without holding down RIGHT
-                    }
-                    state = UserInputState.None;
-                } else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                    if (state == UserInputState.None) {
-                        state = UserInputState.Pause;
-                    } else if (state == UserInputState.Pause) {
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_RIGHT -> {
+                        if (state != UserInputState.FastForward || e.isShiftDown()) {
+                            return; // shift = keep fast forwarding even without holding down RIGHT
+                        }
                         state = UserInputState.None;
-                        // we need to start the simulation again
-                        // for this, we create a new thread, which acts as the main thread
-                        window.startInThread();
-                    } else return;
-                } else return;
+                    }
+                    case KeyEvent.VK_SPACE -> {
+                        if (state == UserInputState.None) {
+                            state = UserInputState.Pause;
+                        } else if (state == UserInputState.Pause) {
+                            state = UserInputState.None;
+                            // we need to start the simulation again
+                            // for this, we create a new thread, which acts as the main thread
+                            window.startInThread();
+                        } else return;
+                    }
+                    case KeyEvent.VK_K -> {
+                        if (state == UserInputState.Skip) {
+                            state = UserInputState.None;
+                        } else if (state == UserInputState.None) {
+                            state = UserInputState.Skip;
+                        } else return;
+                    }
+                    default -> {
+                        return;
+                    }
+                }
 
                 stateChanged();
             }
-        }
-
-                ;
+        };
     }
-
-    // todo: add super-fast-forward (alt name: "skip"): basically same as fast forward, but use a fixed time of 0,
-    //  so we basically skip all generations and draw exactly once per gen
 
     // todo: check determinism (compare Compute and Live). They were equal, but now it seems they aren't
 
@@ -139,6 +173,7 @@ class UserInputPanel extends JPanel {
     enum UserInputState {
         None,
         FastForward,
+        Skip,
         Pause
     }
 }
