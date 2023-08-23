@@ -28,27 +28,26 @@ class UserInputPanel extends JPanel {
 
         Path2D path = new Path2D.Float();
         path.moveTo(x, margin_y);
-        path.curveTo(x, margin_y, x + 6, (centerY - margin_y) / 2f - 1f, x + 16, centerY);
-        path.moveTo(x, HEIGHT - margin_y);
-        path.curveTo(x, HEIGHT - margin_y, x + 10, (HEIGHT + centerY - margin_y) / 2f + 1f, x + 16, centerY);
-        path.moveTo(x, margin_y);
-        path.lineTo(x, HEIGHT - margin_y);
+        path.curveTo(x + 5f, 8f, x + 11, 16f, x + 16, centerY);
+        path.curveTo(x + 11f, 26f, x + 5, 34f,  x, HEIGHT - margin_y);
+        path.closePath();
+
         return path;
     }
 
     private void drawFastForward(Graphics2D g) {
         float cx = WIDTH / 2f; // center x
 
-        g.setColor(Color.BLACK);
+        g.setColor(new Color(0, 0, 0, 0.4f));
         g.setStroke(new BasicStroke(2.5f));
 
         // right
         Path2D path = getTriangleFastForward(cx + 2f);
-        g.draw(path);
+        g.fill(path);
 
         // left
         path = getTriangleFastForward(cx - 17f);
-        g.draw(path);
+        g.fill(path);
     }
 
     private void drawPause(Graphics2D g) {
@@ -105,7 +104,7 @@ class UserInputPanel extends JPanel {
             @Override
             public void keyReleased(KeyEvent e) {
                 if (state == UserInputState.FastForward && e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                    if  (e.isShiftDown()) {
+                    if (e.isShiftDown()) {
                         return; // shift = keep fast forwarding even without holding down RIGHT
                     }
                     state = UserInputState.None;
@@ -127,6 +126,16 @@ class UserInputPanel extends JPanel {
                 ;
     }
 
+    // todo: add super-fast-forward (alt name: "skip"): basically same as fast forward, but use a fixed time of 0,
+    //  so we basically skip all generations and draw exactly once per gen
+
+    // todo: check determinism (compare Compute and Live). They were equal, but now it seems they aren't
+
+    // todo: add graphs for genetic-diversity and survive-rate
+
+    // todo: for compute: time of animation based on config variables
+    // todo: Bug for compute: second last compression seems to have very few bytes, why?
+    // todo: when fast-forward and window out of focus, it seems to be slow again
     enum UserInputState {
         None,
         FastForward,
