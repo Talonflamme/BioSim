@@ -4,12 +4,11 @@ import simulation.Simulation;
 
 import javax.swing.*;
 
-import static utility.Utility.yellow;
-
 public class LiveSimulationWindow {
     private final JFrame frame;
     private final Simulation simulation;
     private final Draw draw;
+    private Thread simulationThread;
 
     public LiveSimulationWindow(Simulation simulation) {
         this.simulation = simulation;
@@ -17,10 +16,12 @@ public class LiveSimulationWindow {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setResizable(false);
 
-        draw = new Draw(simulation, frame);
+        draw = new Draw(simulation, frame, this);
 
         frame.pack();
         frame.setLocationRelativeTo(null);
+
+        frame.addKeyListener(draw.information.userInput.getListener());
     }
 
     public void show() {
@@ -29,15 +30,32 @@ public class LiveSimulationWindow {
 
     private static final double ANIMATION_REFRESH_RATE = 1000.0 / 60.0;
 
+    /**
+     * Creates and starts a new thread that calls the {@link #start()} method. First, checks whether there is already
+     * a thread performing this task. If there is, the method simply returns, neither stopping the already running
+     * thread nor restarting or reassigning it. The name of the thread is {@code "simulation-thread"}.
+     */
+    public void startInThread() {
+        boolean isRunning = simulationThread != null && simulationThread.isAlive();
+        if (isRunning) return;
+        simulationThread = new Thread(this::start, "simulation-thread");
+        simulationThread.start();
+    }
+
     public void start() {
         do {
             long startMs = System.currentTimeMillis();
             simulation.liveStep();
             long endMs = System.currentTimeMillis();
 
-            startAnimation(endMs - startMs);
-        } while (simulation.getState() != Simulation.SimulationState.Inactive);
-        System.out.println(yellow("Finished"));
+            if (draw.information.userInput.state == UserInputPanel.UserInputState.FastForward) {
+                boolean isStep = simulation.getState() == Simulation.SimulationState.AfterStep;
+                startAnimationFixedTime(isStep ? 0.1 : 249);
+            } else {
+                startAnimation(endMs - startMs);
+            }
+        } while (simulation.getState() != Simulation.SimulationState.Inactive &&
+                 draw.information.userInput.state != UserInputPanel.UserInputState.Pause);
     }
 
     private void onNewGeneration() {
@@ -49,6 +67,14 @@ public class LiveSimulationWindow {
         }
 
         draw.information.onNewGeneration(simulation.getProgress().getGeneration(), simulation.getAgents(), surviveRate);
+    }
+
+    private void startAnimationFixedTime(double time) {
+        switch (simulation.getState()) {
+            case AfterStep -> animateStep(time);
+            case AfterSelection -> animateSelection(time);
+            case NewGeneration, AfterInit -> onNewGeneration();
+        }
     }
 
     /**

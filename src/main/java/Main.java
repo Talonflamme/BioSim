@@ -18,7 +18,7 @@ public class Main {
                 report.enable(Report.Feature.AllGenerations);
                 LiveSimulationWindow window = new LiveSimulationWindow(simulation);
                 window.show();
-                window.start();
+                window.startInThread();
             } else {
                 report.enable(Report.Feature.AllGenerations);
                 report.enable(Report.Feature.Compressed);

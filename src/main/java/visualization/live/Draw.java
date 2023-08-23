@@ -13,7 +13,7 @@ class Draw extends JPanel {
     final SelectionPanel selection;
     final InformationPanel information;
 
-    Draw(Simulation simulation, JFrame frame) {
+    Draw(Simulation simulation, JFrame frame, LiveSimulationWindow window) {
 
         setLayout(null);
         setBackground(new Color(43, 45, 48));
@@ -29,7 +29,7 @@ class Draw extends JPanel {
         selection.calcBounds((int) (WIDTH * -0.18f), 0, WIDTH, HEIGHT);
 
         int informationLeft = agents.getX() + agents.getWidth();
-        information = new InformationPanel(informationLeft, agents.getY(), WIDTH - informationLeft, agents.getHeight());
+        information = new InformationPanel(informationLeft, agents.getY(), WIDTH - informationLeft, agents.getHeight(), window);
         add(information);
     }
 

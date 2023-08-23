@@ -46,20 +46,26 @@ class InformationPanel extends JPanel {
      */
     private float surviveRate;
 
+    final UserInputPanel userInput;
+
     /**
      * @param leftAvailable   The available space for this component from the left.
      * @param topAvailable    The available space for this component from the top.
      * @param widthAvailable  The available width for this component.
      * @param heightAvailable The available height for this component.
      */
-    InformationPanel(int leftAvailable, int topAvailable, int widthAvailable, int heightAvailable) {
+    InformationPanel(int leftAvailable, int topAvailable, int widthAvailable, int heightAvailable, LiveSimulationWindow window) {
         super();
 
         surviveRate = 1f; // default to 100%
 
+        setLayout(null);
         setBounds(leftAvailable + PAD_X, topAvailable + PAD_Y,
                 widthAvailable - PAD_X * 2, heightAvailable - PAD_Y * 2);
         setBackground(new Color(0x5586ff));
+
+        userInput = new UserInputPanel(getWidth() - PAD_X, getHeight() - PAD_Y, window);
+        add(userInput);
     }
 
     private static void drawCenter(Graphics2D g, String str, int xOff, int width, int y) {
