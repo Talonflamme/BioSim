@@ -16,6 +16,11 @@ import static utility.Utility.format;
 class InformationPanel extends JPanel {
     private static final int PAD_X = 10;
     private static final int PAD_Y = 10;
+    /**
+     * The height that {@link BrainVisualizer#HEIGHT} is temporarily assigned to during the
+     * draw process of this component.
+     */
+    private static final int BRAIN_IMAGE_HEIGHT = 630;
     private static final Font H1 = new Font("Poppins", Font.BOLD, 30);
     private static final Font H2 = new Font("Poppins", Font.BOLD, 24);
     private static final Font H3 = new Font("Poppins", Font.PLAIN, 20);
@@ -73,7 +78,7 @@ class InformationPanel extends JPanel {
         g.drawString(str, xOff + (width - w) / 2, y);
     }
 
-    private void drawText(Graphics2D g, int imgWidth, int xOff, int yOff) {
+    private void drawTextOnImage(Graphics2D g, int imgWidth, int xOff, int yOff) {
         String str1 = "Most Common Gene (%d): ".formatted(mostCommonBrain.right);
 
         String str2 = mostCommonBrain.left.genomeToString();
@@ -108,20 +113,20 @@ class InformationPanel extends JPanel {
         g.setFont(H3);
         drawCenter(g, "Genetic Diversity: " + format(geneticDiversity * 100) + "%", 0, getWidth(), 70);
 
+        int imgWidth = getWidth() - 20;
+        int imgHeight = (int) ((BRAIN_IMAGE_HEIGHT / (float) BrainVisualizer.WIDTH) * imgWidth);
 
         // draw survive rate text
         String surviveRateText = "Survive Rate: %d%%".formatted(Math.round(surviveRate * 100f));
         g.setColor(Color.WHITE);
         g.setFont(H3);
-        g.drawString(surviveRateText, 120, 556);
+        g.drawString(surviveRateText, 120, 122 + imgHeight);
 
         if (mostCommonBrain == null) return;
 
-        int width = getWidth() - 20;
-        int height = (int) ((BrainVisualizer.HEIGHT / (float) BrainVisualizer.WIDTH) * width);
-        g.drawImage(brainImage, 10, 90, getWidth() - 20, height, null);
+        g.drawImage(brainImage, 10, 90, getWidth() - 20, imgHeight, null);
 
-        drawText(g, width, 10, 90);
+        drawTextOnImage(g, imgWidth, 10, 90);
     }
 
 
@@ -142,7 +147,7 @@ class InformationPanel extends JPanel {
 
         if (count > 1) {
             mostCommonBrain = new ImmutablePair<>(Brain.fromString(genome), count);
-            BrainVisualizer visualizer = new BrainVisualizer(mostCommonBrain.left);
+            BrainVisualizer visualizer = new BrainVisualizer(mostCommonBrain.left, BRAIN_IMAGE_HEIGHT, 10);
             brainImage = visualizer.createImage();
 
             this.gen = gen;

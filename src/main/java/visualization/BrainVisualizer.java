@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -17,13 +18,57 @@ public class BrainVisualizer {
     private static final Color GREEN_COLOR = new Color(0x3cfa60);
     public static final int WIDTH = 860;
     public static final int HEIGHT = 910;
-    private static final int PADDING = 80;
+    /**
+     * How much the y position of nodes may move up or down. Mainly used in {@link #computePointsOfNodes(Node[], int)}
+     */
+    private static final int Y_DEVIATION = 20;
+    private static final int PADDING_X = 80;
+    private static final int PADDING_Y = 138;
     private static final int RADIUS = 90;
 
     private final Brain brain;
+    /**
+     * The height used for the image creation of this image.
+     * Should be either
+     * <li>
+     * Above or equal to 0
+     * </li>
+     * <li>
+     * -1 to disable (uses {@link #HEIGHT} instead)
+     * </li>
+     */
+    private final int targetHeight;
+    /**
+     * The padding that is applied at the bottom of the created image. Should be either
+     * <li>
+     * Above 0
+     * </li>
+     * <li>
+     * -1 to disable (uses {@link #PADDING_Y} instead)
+     * </li>
+     */
+    private final int paddingBottom;
 
     public BrainVisualizer(Brain brain) {
+        this(brain, -1);
+    }
+
+    public BrainVisualizer(Brain brain, int targetHeight) {
+        this(brain, targetHeight, -1);
+    }
+
+    public BrainVisualizer(Brain brain, int targetHeight, int paddingBottom) {
         this.brain = brain;
+        this.targetHeight = targetHeight == -1 ? HEIGHT : targetHeight;
+        this.paddingBottom = paddingBottom == -1 ? PADDING_X : paddingBottom;
+
+        if (targetHeight <= 0 && targetHeight != -1) {
+            throw new IllegalArgumentException("targetHeight must be greater than 0 or equal to -1.");
+        }
+
+        if (paddingBottom < -1) {
+            throw new IllegalArgumentException("paddingBottom must greater than or equal to 0 or equal to -1.");
+        }
     }
 
     private static InputNode[] getInputNodes(Connection[] connections) {
@@ -33,7 +78,9 @@ public class BrainVisualizer {
                 set.add((InputNode) con.source());
             }
         }
-        return set.toArray(InputNode[]::new);
+        // we insert "useless" sorting here in order to make it deterministic
+        return set.stream().sorted(Comparator.comparingInt(a -> a.getType().ordinal()))
+                .toArray(InputNode[]::new);
     }
 
     private static InnerNode[] getInnerNodes(Connection[] connections) {
@@ -46,7 +93,9 @@ public class BrainVisualizer {
                 set.add((InnerNode) con.target());
             }
         }
-        return set.toArray(InnerNode[]::new);
+        // we insert "useless" sorting here in order to make it deterministic
+        return set.stream().sorted(Comparator.comparingInt(InnerNode::getId))
+                .toArray(InnerNode[]::new);
     }
 
     private static OutputNode[] getOutputNodes(Connection[] connections) {
@@ -56,11 +105,13 @@ public class BrainVisualizer {
                 set.add((OutputNode) con.target());
             }
         }
-        return set.toArray(OutputNode[]::new);
+        // we insert "useless" sorting here in order to make it deterministic
+        return set.stream().sorted(Comparator.comparingInt(a -> a.getType().ordinal()))
+                .toArray(OutputNode[]::new);
     }
 
     /**
-     * Computes the position of all nodes (Input, Inner & Output).
+     * Computes the <b>center</b> position of all nodes (Input, Inner & Output).
      *
      * @return a dictionary containing the nodes mapped to the center of their circle.
      */
@@ -69,13 +120,13 @@ public class BrainVisualizer {
         InnerNode[] innerNodes = getInnerNodes(connections);
         OutputNode[] outputs = getOutputNodes(connections);
 
-        int y = Math.round(PADDING * 1.75f);
-
         HashMap<Node, Point> map = new HashMap<>();
 
-        map.putAll(computePointsOfNodes(inputs, y));
-        map.putAll(computePointsOfNodes(innerNodes, (HEIGHT - RADIUS) / 2));
-        map.putAll(computePointsOfNodes(outputs, HEIGHT - y - RADIUS));
+        int availableSpace = targetHeight - PADDING_Y - paddingBottom - Y_DEVIATION * 2; // * 2 since we only care about top and bottom
+        int topY = PADDING_Y + Y_DEVIATION; // y of the topmost nodes
+        map.putAll(computePointsOfNodes(inputs, topY));
+        map.putAll(computePointsOfNodes(innerNodes, topY + (availableSpace - RADIUS) / 2)); // center y
+        map.putAll(computePointsOfNodes(outputs, targetHeight - paddingBottom - RADIUS - Y_DEVIATION));
 
         return map;
     }
@@ -96,15 +147,26 @@ public class BrainVisualizer {
         });
     }
 
+    /**
+     * Compute the positions of the provided nodes. These positions typically align in a horizontal line
+     * with the y coordinate being the same as the parameter. If there are more than 2 nodes, the y position might
+     * differ a little bit (max. 20 pixels). Still is roughly at the horizontal line.
+     *
+     * @param nodes the nodes of which to compute the position.
+     * @param y     the basic y coordinate of the positions. Although the position might slightly alter, the y position
+     *              will be roughly equal to this param. Note: y does not mark the center,
+     *              but instead the top of the circle
+     * @return a HashMap which has the Node as Key and its corresponding position as Value.
+     */
     private HashMap<Node, Point> computePointsOfNodes(Node[] nodes, int y) {
         HashMap<Node, Point> map = new HashMap<>();
         if (nodes.length == 0) return map;
-        int spaceForEach = (WIDTH - PADDING * 2) / nodes.length;
+        int spaceForEach = (WIDTH - PADDING_X * 2) / nodes.length;
         for (int i = 0; i < nodes.length; i++) {
-            int x = PADDING + spaceForEach * i + (spaceForEach - RADIUS) / 2;
+            int x = PADDING_X + spaceForEach * i + (spaceForEach - RADIUS) / 2;
             int y1 = y;
             if (nodes.length > 2) {
-                y1 += (1 - i % 2) * 40;
+                y1 += (1 - i % 2) * Y_DEVIATION * 2 - Y_DEVIATION;
             }
             map.put(nodes[i], new Point(x + RADIUS / 2, y1 + RADIUS / 2));
         }
@@ -210,14 +272,14 @@ public class BrainVisualizer {
      */
     public BufferedImage createImage() {
         Connection[] connections = brain.getConnections();
-        BufferedImage img = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+        BufferedImage img = new BufferedImage(WIDTH, targetHeight, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = img.createGraphics();
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setFont(new Font("Poppins", Font.BOLD, 34));
 
         g.setColor(BACKGROUND_COLOR);
-        g.fillRect(0, 0, WIDTH, HEIGHT);
+        g.fillRect(0, 0, WIDTH, targetHeight);
 
         HashMap<Node, Point> centers = computePointsOfNodes(connections);
         drawConnections(g, connections, centers);
