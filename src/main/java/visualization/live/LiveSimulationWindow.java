@@ -80,8 +80,8 @@ public class LiveSimulationWindow {
 
     private void startAnimationFixedTime(double time) {
         switch (simulation.getState()) {
-            case AfterStep -> animateStep(time);
-            case AfterSelection -> animateSelection(time);
+            case AfterStep -> animateStep(time, UserInputPanel.UserInputState.FastForward);
+            case AfterSelection -> animateSelection(time, UserInputPanel.UserInputState.FastForward);
             case NewGeneration, AfterInit -> onNewGeneration();
         }
     }
@@ -93,8 +93,8 @@ public class LiveSimulationWindow {
      */
     private void startAnimation(long elapsedMs) {
         switch (simulation.getState()) {
-            case AfterStep -> animateStep(simulation.getConfig().getMsPerStep() - elapsedMs);
-            case AfterSelection -> animateSelection(simulation.getConfig().getMsPerSelection() - elapsedMs);
+            case AfterStep -> animateStep(simulation.getConfig().getMsPerStep() - elapsedMs, UserInputPanel.UserInputState.None);
+            case AfterSelection -> animateSelection(simulation.getConfig().getMsPerSelection() - elapsedMs, UserInputPanel.UserInputState.None);
             case NewGeneration, AfterInit -> onNewGeneration();
         }
     }
@@ -129,11 +129,12 @@ public class LiveSimulationWindow {
      * @param durationMs    the duration of this animation in milliseconds.
      * @param animationFunc the animation function. This function takes in a float between 0 and 1, which
      *                      represents the progress of this animation.
+     * @param expectedState the expected state for this animation. The animation is cancelled when the state changes.
      */
-    private static void animate(double durationMs, AnimationConsumer animationFunc) {
+    private void animate(double durationMs, AnimationConsumer animationFunc, UserInputPanel.UserInputState expectedState) {
         if (durationMs == 0) return;
         double time = 0.0; // elapsed time since method start
-        while (time < durationMs) {
+        while (time < durationMs && draw.information.userInput.state == expectedState) {
             long start = System.currentTimeMillis();
             float progress = (float) Math.min(time / durationMs, 1);
             animationFunc.accept(progress);
@@ -150,8 +151,8 @@ public class LiveSimulationWindow {
      *
      * @param durationMs the duration this animation should last.
      */
-    private void animateStep(double durationMs) {
-        animate(durationMs, draw.agents::animate);
+    private void animateStep(double durationMs, UserInputPanel.UserInputState expectedState) {
+        animate(durationMs, draw.agents::animate, expectedState);
     }
 
     /**
@@ -159,7 +160,7 @@ public class LiveSimulationWindow {
      *
      * @param durationMs the duration this animation should last.
      */
-    private void animateSelection(double durationMs) {
-        animate(durationMs, draw.selection::animate);
+    private void animateSelection(double durationMs, UserInputPanel.UserInputState expectedState) {
+        animate(durationMs, draw.selection::animate, expectedState);
     }
 }
