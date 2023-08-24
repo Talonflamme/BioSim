@@ -181,7 +181,7 @@ public class Simulation {
             }
 
             state = SimulationState.Selection;
-            visualizer.addSelection(config, 5);
+            visualizer.addSelection(config, config.getMsPerSelection() / 1000f);
             int aliveCount = killAgents();
             getReport().newGeneration(gen, aliveCount, agents);
 

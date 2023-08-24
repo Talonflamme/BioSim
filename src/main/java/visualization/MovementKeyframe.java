@@ -3,20 +3,22 @@ package visualization;
 import org.apache.commons.text.TextStringBuilder;
 import simulation.Agent;
 import simulation.Direction;
+import simulation.config.SimulationConfig;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
 
-import static visualization.BoardAnimation.convertDurationToSeconds;
 import static utility.Utility.*;
 
 class MovementKeyframe implements AnimationKeyframe {
     final Hashtable<Agent, ArrayList<Movement>> keyframes;
     private final int idOffset;
+    private final SimulationConfig config;
 
-    MovementKeyframe(int idOffset) {
+    MovementKeyframe(int idOffset, SimulationConfig config) {
         keyframes = new Hashtable<>();
         this.idOffset = idOffset;
+        this.config = config;
     }
 
     public void addFrame(Agent[] agents) {
@@ -116,7 +118,7 @@ class MovementKeyframe implements AnimationKeyframe {
 
     @Override
     public float getDuration() {
-        return convertDurationToSeconds(getSteps());
+        return getSteps() * config.getMsPerStep() / 1000f;
     }
 
     @Override

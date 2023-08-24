@@ -38,7 +38,7 @@ public class BoardAnimation {
     void addFrame(Agent[] agents) {
         MovementKeyframe mkf;
         if (keyframes.isEmpty() || !(keyframes.get(keyframes.size() - 1) instanceof MovementKeyframe)) {
-            keyframes.add(mkf = new MovementKeyframe(getUsedIDs()));
+            keyframes.add(mkf = new MovementKeyframe(getUsedIDs(), config));
         } else {
             mkf = (MovementKeyframe) keyframes.get(keyframes.size() - 1);
         }
@@ -53,13 +53,6 @@ public class BoardAnimation {
     void addFrame(Selection[] selections, float seconds) {
         int id = getUsedIDs();
         keyframes.add(new SelectionKeyframe(selections, seconds, id, Simulation.activeSimulation.getProgress().getGeneration()));
-    }
-
-    static float convertDurationToSeconds(float x) {
-        if (x <= 65) {
-            return x * (float) Math.exp(-x / 81.25);
-        }
-        return x / 45f;
     }
 
     private static String getSVG(int width, int height, float seconds, String animations, String circles) {

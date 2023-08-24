@@ -77,7 +77,7 @@ public class Board {
      * @param config  the Config from which to take the {@link SimulationConfig#getSelection selections}.
      * @param seconds the amount of seconds this animation should last.
      */
-    public void addSelection(SimulationConfig config, int seconds) {
+    public void addSelection(SimulationConfig config, float seconds) {
         animation.addFrame(config.getSelection(), seconds);
     }
 
