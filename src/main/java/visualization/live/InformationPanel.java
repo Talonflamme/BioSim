@@ -3,7 +3,6 @@ package visualization.live;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import simulation.Agent;
 import simulation.brain.Brain;
-import simulation.reports.LastGenerationInfo;
 import simulation.reports.Report;
 import visualization.BrainVisualizer;
 
@@ -21,6 +20,14 @@ class InformationPanel extends JPanel {
      * draw process of this component.
      */
     private static final int BRAIN_IMAGE_HEIGHT = 630;
+    /**
+     * The y coordinate that is used to draw the brain image.
+     */
+    static final int IMG_Y = 90;
+    /**
+     * How much padding is applied next to the brain image.
+     */
+    static final int IMG_PAD_X = 10;
     private static final Font H1 = new Font("Poppins", Font.BOLD, 30);
     private static final Font H2 = new Font("Poppins", Font.BOLD, 24);
     private static final Font H3 = new Font("Poppins", Font.PLAIN, 20);
@@ -43,15 +50,9 @@ class InformationPanel extends JPanel {
      * <p>0 means all are exactly equal.</p>
      */
     private float geneticDiversity;
-    /**
-     * A value representing the ratio of agents that survived last generation. Probably derived from
-     * {@link LastGenerationInfo#surviveRate()}. Always between {@code 0} and {@code 1}. Defaults to
-     * {@code 100%} (1).
-     * <p>Note: {@code 0} will never occur, since the simulation is cancelled when no agent is alive.</p>
-     */
-    private float surviveRate;
 
     final UserInputPanel userInput;
+    final GraphPanel graph;
 
     /**
      * @param leftAvailable   The available space for this component from the left.
@@ -62,15 +63,16 @@ class InformationPanel extends JPanel {
     InformationPanel(int leftAvailable, int topAvailable, int widthAvailable, int heightAvailable, LiveSimulationWindow window) {
         super();
 
-        surviveRate = 1f; // default to 100%
-
         setLayout(null);
         setBounds(leftAvailable + PAD_X, topAvailable + PAD_Y,
                 widthAvailable - PAD_X * 2, heightAvailable - PAD_Y * 2);
         setBackground(new Color(0x5586ff));
 
-        userInput = new UserInputPanel(getWidth() - PAD_X, getHeight() - PAD_Y, window);
+        userInput = new UserInputPanel(getWidth() - PAD_X, window);
         add(userInput);
+
+        graph = new GraphPanel(this);
+        add(graph);
     }
 
     private static void drawCenter(Graphics2D g, String str, int xOff, int width, int y) {
@@ -99,6 +101,14 @@ class InformationPanel extends JPanel {
         drawCenter(g, str2.substring(str2len), xOff, imgWidth, yOff + 60);
     }
 
+    int getImgWidth() {
+        return getWidth() - IMG_PAD_X * 2;
+    }
+
+    int getImgHeight() {
+        return (int) ((BRAIN_IMAGE_HEIGHT / (float) BrainVisualizer.WIDTH) * getImgWidth());
+    }
+
     @Override
     protected void paintComponent(Graphics g1d) {
         super.paintComponent(g1d);
@@ -113,20 +123,13 @@ class InformationPanel extends JPanel {
         g.setFont(H3);
         drawCenter(g, "Genetic Diversity: " + format(geneticDiversity * 100) + "%", 0, getWidth(), 70);
 
-        int imgWidth = getWidth() - 20;
-        int imgHeight = (int) ((BRAIN_IMAGE_HEIGHT / (float) BrainVisualizer.WIDTH) * imgWidth);
-
-        // draw survive rate text
-        String surviveRateText = "Survive Rate: %d%%".formatted(Math.round(surviveRate * 100f));
-        g.setColor(Color.WHITE);
-        g.setFont(H3);
-        g.drawString(surviveRateText, 120, 122 + imgHeight);
-
         if (mostCommonBrain == null) return;
 
-        g.drawImage(brainImage, 10, 90, getWidth() - 20, imgHeight, null);
+        int imgWidth = getImgWidth();
+        int imgHeight = getImgHeight();
+        g.drawImage(brainImage, 10, IMG_Y, getWidth() - 20, imgHeight, null);
 
-        drawTextOnImage(g, imgWidth, 10, 90);
+        drawTextOnImage(g, imgWidth, 10, IMG_Y);
     }
 
 
@@ -139,7 +142,8 @@ class InformationPanel extends JPanel {
      */
     public void onNewGeneration(int gen, Agent[] agents, float surviveRate) {
         this.geneticDiversity = Report.geneticDiversity(agents);
-        this.surviveRate = surviveRate;
+
+        graph.addData(surviveRate, geneticDiversity);
 
         var mostCommonGene = Report.mostCommonGene(agents);
         String genome = mostCommonGene.getKey();

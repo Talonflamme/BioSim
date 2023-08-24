@@ -14,11 +14,11 @@ class UserInputPanel extends JPanel {
     private final LiveSimulationWindow window;
     UserInputState state = UserInputState.None;
 
-    UserInputPanel(int right, int bottom, LiveSimulationWindow window) {
+    UserInputPanel(int right, LiveSimulationWindow window) {
         super();
         this.window = window;
 
-        setBounds(right - WIDTH, bottom - HEIGHT, WIDTH, HEIGHT);
+        setBounds(right - WIDTH, 8, WIDTH, HEIGHT);
         setBackground(TRANSPARENT);
     }
 
