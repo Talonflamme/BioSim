@@ -4,6 +4,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import simulation.Agent;
 import simulation.config.SimulationConfig;
+import utility.BetterRandom;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -50,8 +51,8 @@ public class Report implements AutoCloseable {
             }
         }
         String str = "%s: %s -> %s".formatted(yellow("Mutation"), a, b);
-        file.println(str);
         if (isEnabled(Feature.Mutation)) {
+            file.println(str);
             System.out.println(str);
         }
     }
@@ -112,10 +113,13 @@ public class Report implements AutoCloseable {
      */
     public static float geneticDiversity(Agent[] agents) {
         int samples = agents.length / 2;
+        // create new random, since this does not alter the simulation, but is called in live window
+        // this would otherwise make the simulation behave differently in Compute and Live mode.
+        BetterRandom rand = new BetterRandom(69);
         float sum = 0;
         for (int i = 0; i < samples; i++) {
-            Agent a = Rand.choice(agents);
-            Agent b = Rand.choice(agents);
+            Agent a = rand.choice(agents);
+            Agent b = rand.choice(agents);
             sum += a.getBrain().similarity(b.getBrain());
         }
         return 1f - sum / samples;

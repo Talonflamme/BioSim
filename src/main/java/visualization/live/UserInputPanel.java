@@ -163,10 +163,6 @@ class UserInputPanel extends JPanel {
         };
     }
 
-    // todo: check determinism (compare Compute and Live). They were equal, but now it seems they aren't
-
-    // todo: add graphs for genetic-diversity and survive-rate
-
     // todo: for compute: time of animation based on config variables
     // todo: Bug for compute: second last compression seems to have very few bytes, why?
     // todo: when fast-forward and window out of focus, it seems to be slow again

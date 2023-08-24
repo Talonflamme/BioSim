@@ -59,6 +59,7 @@ public class Agent {
 
     /**
      * Queues up the desired move. Does not ensure that the move is executed.
+     *
      * @param dir the direction.
      */
     public void queueMove(Direction dir) {
@@ -67,6 +68,7 @@ public class Agent {
 
     /**
      * Called at the end of the step.
+     *
      * @param newX the new x coordinate of the agent. Can be the same as before
      * @param newY the new y coordinate of the agent. Can be the same as before
      */
