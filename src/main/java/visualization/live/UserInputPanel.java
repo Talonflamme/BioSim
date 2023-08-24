@@ -163,7 +163,6 @@ class UserInputPanel extends JPanel {
         };
     }
 
-    // todo: Bug for compute: second last compression seems to have very few bytes, why?
     // todo: when fast-forward and window out of focus, it seems to be slow again
     enum UserInputState {
         None,

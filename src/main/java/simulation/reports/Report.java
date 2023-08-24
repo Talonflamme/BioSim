@@ -163,7 +163,7 @@ public class Report implements AutoCloseable {
         if (bytes >= 1e6) {
             return "%sMB".formatted(Math.round(bytes / 1e5) / 10f);
         } else if (bytes >= 1e3) {
-            return "%sKiB".formatted(Math.round(bytes / 1e2) / 10f);
+            return "%sKB".formatted(Math.round(bytes / 1e2) / 10f);
         }
         return bytes + "B";
     }

@@ -116,7 +116,7 @@ public class Simulation {
         }
         Rand.shuffle(aliveParents);
         for (int i = agentNum - count; i > 0; i--) {
-            brains[count++] = aliveParents.get(i).getBrain().generateChild(); // todo
+            brains[count++] = aliveParents.get(i).getBrain().generateChild();
         }
 
         return getAgentsFromBrains(brains);
@@ -202,8 +202,6 @@ public class Simulation {
             grid.clear();
             grid.setAgents(agents);
         }
-
-        visualizer.saveRecording("snapshots/generation.svg");
 
         state = SimulationState.Inactive;
     }
