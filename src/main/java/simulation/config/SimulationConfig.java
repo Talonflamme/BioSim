@@ -94,6 +94,10 @@ public class SimulationConfig {
         return msPerStep;
     }
 
+    public boolean isKillEnabled() {
+        return enableKill;
+    }
+
     /**
      * The rate of mutations. E.g: 0.001 = 0.1%, every 1 thousand bits copied, there is an error.
      */
@@ -117,6 +121,10 @@ public class SimulationConfig {
      * How many milliseconds each selection should take in visualization.
      */
     private final float msPerSelection;
+    /**
+     * Whether {@link simulation.action.ActionType#KillForward ActionType.KillForward} is enabled.
+     */
+    private final boolean enableKill;
 
     @JsonCreator
     public SimulationConfig(@JsonProperty(value = "stepsPerGen", required = true) int stepsPerGen,
@@ -131,6 +139,7 @@ public class SimulationConfig {
                             @JsonProperty(value = "mutationRate", required = true) float mutationRate,
                             @JsonProperty(value = "selection", required = true) ObjectNode[] selection,
                             @JsonProperty(value = "uniqueColors", defaultValue = "false") boolean uniqueColors,
+                            @JsonProperty(value="enableKill", defaultValue = "false") boolean enableKill,
                             @JsonProperty(value = "msPerStep", defaultValue = "50") float msPerStep,
                             @JsonProperty(value = "msPerSelection", defaultValue = "6000") float msPerSelection) throws ConfigError {
         this.stepsPerGen = stepsPerGen;
@@ -147,6 +156,7 @@ public class SimulationConfig {
         this.animationFrequency = animationFrequency;
         this.msPerStep = msPerStep;
         this.msPerSelection = msPerSelection;
+        this.enableKill = enableKill;
 
         if (this.msPerSelection < 0) {
             throw new ConfigError("msPerSelection must be greater or equal to 0");

@@ -2,6 +2,8 @@ package simulation;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
+
 public class FakeGrid extends Grid {
     static int getWidth(String data) {
         return data.indexOf('\n');
@@ -19,7 +21,7 @@ public class FakeGrid extends Grid {
             for (int i = 0; i < super.getWidth(); i++) {
                 char ch = data.charAt(count++);
                 if (ch == 'X') {
-                    set(i, j, true);
+                    set(i, j, new FakeAgent(i, j));
                 } else if (ch != 'O') {
                     throw new IllegalArgumentException("%s at %d".formatted(data, count - 1));
                 }
@@ -43,7 +45,7 @@ public class FakeGrid extends Grid {
         StringBuilder sb = new StringBuilder();
         for (int j = 0; j < getHeight(); j++) {
             for (int i = 0; i < getWidth(); i++) {
-                sb.append(get(i, j) ? 'X' : 'O');
+                sb.append(is(i, j) ? 'X' : 'O');
             }
             sb.append('\n');
         }
@@ -52,6 +54,6 @@ public class FakeGrid extends Grid {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof Grid grid && grid.bitSet.equals(this.bitSet);
+        return obj instanceof Grid g && Arrays.equals(this.grid, g.grid);
     }
 }

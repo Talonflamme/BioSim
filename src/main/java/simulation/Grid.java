@@ -4,24 +4,24 @@ import org.jetbrains.annotations.Contract;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.BitSet;
+import java.util.Arrays;
 import java.util.List;
 
 public class Grid {
-    protected final BitSet bitSet;
+    protected final Agent[] grid;
     private final int height;
     private final int width;
 
     public Grid(int width, int height) {
         this.height = height;
         this.width = width;
-        this.bitSet = new BitSet(width * height);
+        this.grid = new Agent[width * height];
     }
 
     public Grid(Grid copy) {
         this.width = copy.getWidth();
         this.height = copy.getHeight();
-        this.bitSet = (BitSet) copy.bitSet.clone();
+        this.grid = copy.grid.clone();
     }
 
     private void checkBounds(int x, int y) {
@@ -37,18 +37,26 @@ public class Grid {
         return x >= 0 && x < width && y >= 0 && y < height;
     }
 
-    public boolean get(int x, int y) {
-        checkBounds(x, y);
-        return bitSet.get(x * height + y);
+    public boolean is(int x, int y) {
+        return get(x, y) != null;
     }
 
-    public void set(int x, int y, boolean value) {
+    public Agent get(int x, int y) {
         checkBounds(x, y);
-        bitSet.set(x * height + y, value);
+        return grid[x * height + y];
+    }
+
+    public void set(int x, int y, Agent value) {
+        checkBounds(x, y);
+        grid[x * height + y] = value;
+    }
+
+    public void clear(int x, int y) {
+        set(x, y, null);
     }
 
     public void clear() {
-        bitSet.clear();
+        Arrays.fill(grid, null);
     }
 
     /**
@@ -59,7 +67,7 @@ public class Grid {
     public void setAgents(Iterable<Agent> agents) {
         for (Agent agent : agents) {
             if (!agent.isAlive()) continue;
-            set(agent.getX(), agent.getY(), true);
+            set(agent.getX(), agent.getY(), agent);
         }
     }
 
@@ -81,7 +89,7 @@ public class Grid {
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                img.setRGB(i, j, get(i, j) ? Color.WHITE.getRGB() : 0);
+                img.setRGB(i, j, is(i, j) ? Color.WHITE.getRGB() : 0);
             }
         }
         return img;

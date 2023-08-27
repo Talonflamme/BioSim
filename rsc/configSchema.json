@@ -16,6 +16,10 @@
       "description": "The frequency of creating animations. 1 means every generation is animated, 3 every third, and so on.",
       "default": 1
     },
+    "enableKill": {
+      "type": "boolean",
+      "default": false
+    },
     "numGenerations": {
       "$ref": "#/definitions/positiveInteger"
     },

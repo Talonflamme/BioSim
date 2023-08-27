@@ -23,6 +23,7 @@ public class Simulation {
     private Grid grid;
     private final Board visualizer;
     private Agent[] agents;
+    private final ArrayList<QueuedKill> queuedKills = new ArrayList<>();
     private final ArrayList<QueuedMove> queuedMoves = new ArrayList<>();
     private SimulationState state;
     private final Report report;
@@ -132,7 +133,7 @@ public class Simulation {
         int count = 0;
         for (Agent agent : agents) {
             if (!config.survives(agent)) {
-                agent.die();
+                agent.die(grid);
             } else {
                 count++;
             }
@@ -354,6 +355,22 @@ public class Simulation {
         queuedMoves.clear();
     }
 
+    /**
+     * Executes all {@link #queuedKills} in random order.
+     */
+    private void executeKills() {
+        assert getState() == SimulationState.KillUpdate;
+
+        for (int i = 0; i < queuedKills.size(); i++) {
+            int rndIndex = i + Rand.nextInt(queuedKills.size() - i);
+            Collections.swap(queuedKills, i, rndIndex);
+            QueuedKill qk = queuedKills.get(i);
+            if (qk.isExecutable(grid)) {
+                grid.get(qk.x, qk.y).die(grid);
+            }
+        }
+    }
+
     private void step() {
         assert state == SimulationState.BeforeStep;
         state = SimulationState.OnAgentThink;
@@ -361,6 +378,8 @@ public class Simulation {
             agent.step();
         }
 
+        state = SimulationState.KillUpdate;
+        executeKills();
         state = SimulationState.MoveUpdate;
         updateMoves();
         for (Agent agent : agents) {
@@ -388,13 +407,45 @@ public class Simulation {
         }
     }
 
+    /**
+     * Queues up a kill and will execute it before {@link #queuedMoves} are executed. Calling this method does not
+     * ensure that the kill is performed or even stored.
+     *
+     * @param x        the position to kill.
+     * @param y        the position to kill.
+     * @param murderer the agent which will perform the kill.
+     * @see QueuedKill
+     */
+    public void queueUpKill(Agent murderer, int x, int y) {
+        assert getState() == SimulationState.OnAgentThink;
+        if (grid.isBounds(x, y)) {
+            synchronized (queuedKills) {
+                queuedKills.add(new QueuedKill(murderer, x, y));
+            }
+        }
+    }
+
+    /**
+     * Stores up a kill that will be executed before any {@link QueuedMove}. Storing up this does not ensure
+     * the execution.
+     *
+     * @param x        the x coordinate of the position to kill.
+     * @param y        the y coordinate of the position to kill.
+     * @param murderer the agent which will kill the specified position.
+     */
+    private record QueuedKill(Agent murderer, int x, int y) {
+        boolean isExecutable(Grid grid) {
+            return grid.isBounds(x, y) && grid.is(x, y) && murderer.isAlive();
+        }
+    }
+
     private record QueuedMove(Agent agent, int x, int y) {
         /**
          * Returns whether this move is executable. Checks if it is {@link Grid#isBounds in bounds} and
-         * if the position is {@link Grid#get available}.
+         * if the position is {@link Grid#is available}.
          */
         boolean isExecutable(Grid grid) {
-            return grid.isBounds(x, y) && !grid.get(x, y);
+            return grid.isBounds(x, y) && !grid.is(x, y);
         }
 
         /**
@@ -402,8 +453,8 @@ public class Simulation {
          * Does <b>NOT</b> check if the move {@link #isExecutable is executable}.
          */
         void execute(Grid grid, SimulationProgress progress) {
-            grid.set(agent.getX(), agent.getY(), false);
-            grid.set(x, y, true);
+            grid.clear(agent.getX(), agent.getY());
+            grid.set(x, y, agent);
             agent.afterStep(x, y, progress);
         }
     }
@@ -425,6 +476,10 @@ public class Simulation {
          * State of {@link #step} where all {@link #queuedMoves queued up moves} are executed
          */
         MoveUpdate,
+        /**
+         * State of {@link #step} where all {@link #queuedKills} are executed.
+         */
+        KillUpdate,
         /**
          * State right before calling {@link #step Simulation.step()}.
          */

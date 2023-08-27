@@ -1,6 +1,8 @@
 package simulation.action;
 
-    public enum ActionType {
+import simulation.Simulation;
+
+public enum ActionType {
         /**
          * Movement in x direction.
          */
@@ -33,7 +35,7 @@ package simulation.action;
         public boolean isEnabled() {
             return switch(this) {
                 case MoveX, MoveReverse, MoveForward, DoNothing, MoveRand, MoveY -> true;
-                case KillForward -> false;
+                case KillForward -> Simulation.config().isKillEnabled();
             };
         }
     }

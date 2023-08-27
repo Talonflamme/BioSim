@@ -17,7 +17,6 @@ import java.util.HashMap;
 import static simulation.Simulation.activeSimulation;
 import static simulation.Simulation.config;
 import static utility.Utility.Rand;
-import static utility.Utility.yellow;
 
 public class Brain {
     /**
@@ -380,6 +379,15 @@ public class Brain {
             Direction dir = Direction.random();
             moveX += dir.getX() * actionValues[ActionType.MoveRand.ordinal()];
             moveY += dir.getY() * actionValues[ActionType.MoveRand.ordinal()];
+        }
+
+        if (ActionType.KillForward.isEnabled()) {
+            float level = actionValues[ActionType.KillForward.ordinal()]; // 0-1
+            float lvl = (float) Math.tanh(level);
+            Direction dir = agent.getForward();
+            if (level > 0.5f && dir != Direction.CENTER && prob2bool(lvl)) {
+                agent.killForward();
+            }
         }
 
         moveX = (float) Math.tanh(moveX);

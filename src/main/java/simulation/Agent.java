@@ -103,7 +103,15 @@ public class Agent {
     /**
      * Sets {@link #alive} to {@code false}.
      */
-    public void die() {
+    public void die(Grid grid) {
         this.alive = false;
+        grid.clear(x, y);
+    }
+
+    public void killForward() {
+        int x = getX() + getForward().getX();
+        int y = getY() + getForward().getY();
+
+        Simulation.activeSimulation.queueUpKill(this, x, y);
     }
 }

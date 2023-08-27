@@ -152,7 +152,7 @@ public class Sensors {
                 if (!grid.isBounds(x, y)) continue;
 
                 maxValue++;
-                if (grid.get(x, y)) {
+                if (grid.is(x, y)) {
                     value++;
                 }
             }
@@ -192,7 +192,7 @@ public class Sensors {
             int dst = POPULATION_SCAN_RADIUS - Math.abs(i) + 1;
             int nearness = dst * dst;
             maxValue += nearness;
-            if (!grid.get(x, y)) continue;
+            if (!grid.is(x, y)) continue;
 
             // calculate how much position is worth
             // nearness: how close position is the agent. Higher = better. Value between 1 and POPULATION_SCAN_RADIUS / 2
