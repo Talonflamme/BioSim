@@ -1,5 +1,6 @@
 package visualization.live;
 
+import simulation.Agent;
 import simulation.Simulation;
 
 import javax.swing.*;
@@ -9,6 +10,7 @@ public class LiveSimulationWindow {
     private final Simulation simulation;
     private final Draw draw;
     private Thread simulationThread;
+    Agent inspectedAgent;
 
     public LiveSimulationWindow(Simulation simulation) {
         this.simulation = simulation;
@@ -75,6 +77,7 @@ public class LiveSimulationWindow {
             surviveRate = simulation.getReport().getLastGeneration().surviveRate();
         }
 
+        inspectedAgent = null;
         draw.information.onNewGeneration(simulation.getProgress().getGeneration(), simulation.getAgents(), surviveRate);
     }
 
@@ -108,6 +111,13 @@ public class LiveSimulationWindow {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public void inspect(Agent agent) {
+        boolean isNew = agent != inspectedAgent;
+        inspectedAgent = agent;
+        if (!isNew) return;
+        draw.information.onInspect();
     }
 
     @FunctionalInterface

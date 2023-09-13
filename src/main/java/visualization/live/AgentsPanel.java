@@ -4,6 +4,8 @@ import simulation.Agent;
 import simulation.Simulation;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 
@@ -12,10 +14,34 @@ import static visualization.Board.BACKGROUND_COLOR;
 import static visualization.Board.RECT_OUTLINE_COLOR;
 
 class AgentsPanel extends BoardPanel {
-    AgentsPanel(Simulation simulation) {
+    private final LiveSimulationWindow lsw;
+
+    private static Agent getAgentForLastPosition(Agent[] agents, int x, int y) {
+        for (Agent a : agents) {
+            if (a.getLastX() == x && a.getLastY() == y) {
+                return a;
+            }
+        }
+        return null;
+    }
+
+    AgentsPanel(Simulation simulation, LiveSimulationWindow lsw) {
         super(simulation);
+        this.lsw = lsw;
         setLayout(null);
         setBackground(BACKGROUND_COLOR);
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int x = (int) Math.ceil(e.getX() / factor) - 1;
+                int y = (int) Math.ceil(e.getY() / factor) - 1;
+                Agent agent = getAgentForLastPosition(AgentsPanel.this.simulation.getAgents(), x, y);
+                if (agent == null) return;
+                AgentsPanel.this.lsw.inspect(agent);
+                AgentsPanel.this.repaint();
+            }
+        });
     }
 
     void drawGrid(Graphics2D g) {
@@ -53,13 +79,22 @@ class AgentsPanel extends BoardPanel {
         Agent[] agents = simulation.getAgents();
         if (agents == null) return;
 
+        boolean inspecting = lsw.inspectedAgent != null;
         for (Agent agent : agents) {
             float alpha = agent.isAlive() ? 1 : deadAgentOpacity;
+            Color brainColor;
+
+            if (inspecting) {
+                brainColor = agent == lsw.inspectedAgent ? new Color(0xfb3d5d) : new Color(0x6588ff);
+            } else {
+                brainColor = agent.getBrain().getColor();
+            }
+
             if (alpha == 0) continue;
             if (alpha == 1) {
-                g.setColor(agent.getBrain().getColor());
+                g.setColor(brainColor);
             } else {
-                g.setColor(changeAlpha(agent.getBrain().getColor(), alpha));
+                g.setColor(changeAlpha(brainColor, alpha));
             }
 
             int lastX = agent.getLastX();

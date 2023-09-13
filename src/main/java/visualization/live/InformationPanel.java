@@ -53,6 +53,7 @@ class InformationPanel extends JPanel {
 
     final UserInputPanel userInput;
     final GraphPanel graph;
+    final LiveSimulationWindow lsw;
 
     /**
      * @param leftAvailable   The available space for this component from the left.
@@ -62,6 +63,7 @@ class InformationPanel extends JPanel {
      */
     InformationPanel(int leftAvailable, int topAvailable, int widthAvailable, int heightAvailable, LiveSimulationWindow window) {
         super();
+        this.lsw = window;
 
         setLayout(null);
         setBounds(leftAvailable + PAD_X, topAvailable + PAD_Y,
@@ -81,9 +83,16 @@ class InformationPanel extends JPanel {
     }
 
     private void drawTextOnImage(Graphics2D g, int imgWidth, int xOff, int yOff) {
-        String str1 = "Most Common Gene (%d): ".formatted(mostCommonBrain.right);
+        String str1;
+        String str2;
+        if (lsw.inspectedAgent == null) {
+            str1 = "Most Common Gene (%d): ".formatted(mostCommonBrain.right);
+            str2 = mostCommonBrain.left.genomeToString();
+        } else {
+            str1 = "Gene of inspected agent: ";
+            str2 = lsw.inspectedAgent.getBrain().genomeToString();
+        }
 
-        String str2 = mostCommonBrain.left.genomeToString();
         if (str2.length() > 71) { // 71 = length for 8 genes
             str2 = str2.substring(0, 72);
         }
@@ -123,7 +132,7 @@ class InformationPanel extends JPanel {
         g.setFont(H3);
         drawCenter(g, "Genetic Diversity: " + format(geneticDiversity * 100) + "%", 0, getWidth(), 70);
 
-        if (mostCommonBrain == null) return;
+        if (mostCommonBrain == null && lsw.inspectedAgent == null) return;
 
         int imgWidth = getImgWidth();
         int imgHeight = getImgHeight();
@@ -132,6 +141,11 @@ class InformationPanel extends JPanel {
         drawTextOnImage(g, imgWidth, 10, IMG_Y);
     }
 
+    public void onInspect() {
+        BrainVisualizer bv = new BrainVisualizer(lsw.inspectedAgent.getBrain(), BRAIN_IMAGE_HEIGHT, 10);
+        brainImage = bv.createImage();
+        this.repaint();
+    }
 
     /**
      * Repaints the component with updated values based on the parameters.

@@ -20,7 +20,7 @@ class Draw extends JPanel {
         frame.setContentPane(this);
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
-        agents = new AgentsPanel(simulation);
+        agents = new AgentsPanel(simulation, window);
         add(agents);
         agents.calcBounds((int) (WIDTH * -0.18f), 0, WIDTH, HEIGHT);
 
